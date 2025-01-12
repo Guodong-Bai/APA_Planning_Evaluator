@@ -1,0 +1,11 @@
+{
+  "planning": {
+    "branch": "gdbai2/dev",
+    "commit": "da06dca5648bdb3caaddf96ce7be94186f84ba1d",
+    "address": "ssh://git@code.iflytek.com:30004/ZNQC_AutonomousDriving/planning.git",
+    "pybind_name": "parallel_planning_py",
+    "lib_address": "build/jupyter_pybind/parallel_planning_py.cpython-37m-x86_64-linux-gnu.so"
+  },
+
+  "output_path": "../out"
+}
