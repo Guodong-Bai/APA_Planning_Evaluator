@@ -42,5 +42,5 @@ print("sync python libs ...")
 subprocess.run(['cp', planning_lib_address, '../../lib'])
 
 # Go back to the task directory and run the simulator
-# os.chdir('../../task')
+os.chdir('../../task')
 # subprocess.run(['python', 'apa_closed_loop_simulator.py', 'simulation_task.json'])
