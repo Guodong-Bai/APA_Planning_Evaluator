@@ -11,6 +11,8 @@ planning_branch = param['planning']['branch']
 planning_commit = param['planning']['commit']
 planning_lib_address = param['planning']['lib_address']
 
+output_path = param['output_path']
+
 print("planning:")
 print(f"address: {planning_address}")
 print("address: ", planning_address)
@@ -43,4 +45,10 @@ subprocess.run(['cp', planning_lib_address, '../../lib'])
 
 # Go back to the task directory and run the simulator
 os.chdir('../../task')
+
+try:
+    os.mkdir(output_path)
+except:
+    pass
+
 # subprocess.run(['python', 'apa_closed_loop_simulator.py', 'simulation_task.json'])
