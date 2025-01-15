@@ -13,10 +13,11 @@ from io import BytesIO
 from bokeh.events import Tap
 
 sys.path.append("../..")
-sys.path.append("../../data")
+sys.path.append("../data")
+
 
 from bokeh.plotting import figure, show, output_file
-from lib.load_rotate import *
+from jupyter_replay.lib.load_rotate import *
 
 
 def load_json(file_path):
@@ -62,8 +63,8 @@ def construct_scenario(
     y_offset_vec = [-0.3, 0.3, 0.6, 0.2, 0.4]
     heading_offset_vec = [0.0, 0.0, 0.0, 6.0 / 57.3, 70 / 57.3]
 
-    curb_file_name = "data/curb.json"
-    obs_car_file_name = "data/parallel_obs_car_0p1.json"
+    curb_file_name = "../data/curb.json"
+    obs_car_file_name = "../data/parallel_obs_car_0p1.json"
 
     obs_car = load_json(obs_car_file_name)
     curb_data = load_json(curb_file_name)
@@ -135,8 +136,6 @@ def construct_scenario(
     obs_x_vec.extend(curb_x_vec)
     obs_y_vec.extend(curb_y_vec)
 
-    print("target_corner_x_vec = ", target_corner_x_vec)
-
     data = {
         "obs_x": obs_x_vec,
         "obs_y": obs_y_vec,
@@ -147,14 +146,14 @@ def construct_scenario(
         "rear_obs_car_matrix": rear_obs_car_matrix,
     }
 
-    output_file_name = f"data/{'front_occupied' if is_front_occupied else 'front_vacant'}_{'rear_occupied' if is_rear_occupied else 'rear_vacant'}.json"
+    output_file_name = f"../data/{'front_occupied' if is_front_occupied else 'front_vacant'}_{'rear_occupied' if is_rear_occupied else 'rear_vacant'}.json"
     print(output_file_name)
     save_json(data, output_file_name)
 
 
 if __name__ == "__main__":
     construct_scenario()
-    name = "data/front_occupied_rear_occupied.json"
+    name = "../data/front_occupied_rear_occupied.json"
 
     data = load_json(name)
 

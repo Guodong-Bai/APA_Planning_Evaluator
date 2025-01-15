@@ -19,7 +19,6 @@ import importlib
 # def LoadInput():
 
 
-
 def UpdatePlanningPybind(path_x_vec, path_y_vec, path_heading_vec,
     planning_module, ego_x, ego_y, ego_heading, obs_x_vec, obs_y_vec, slot_points, ds):
     path_x_vec = []
@@ -37,5 +36,3 @@ def UpdatePlanningPybind(path_x_vec, path_y_vec, path_heading_vec,
     path_y_vec = planning_instance.GetPathEle(1)
     path_heading_vec = planning_instance.GetPathEle(2)
     return 1
-
-__main__
