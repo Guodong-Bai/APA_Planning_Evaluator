@@ -1,38 +1,66 @@
 import __main__
 import sys
+import time
 import numpy as np
 import copy
 import json
 import os
 import shutil
+import importlib
 
 sys.path.append(".")
 sys.path.append("..")
 sys.path.append("../..")
+sys.path.append("../lib")
 sys.path.append("../../jupyter/")
 
-sys.path.append("../lib")
-
-
 import importlib
+import time
 
-# def LoadInput():
+class PlanningUpdater:
+    def __init__(self, planning_module):
+        # 动态加载模块
+        self.planning_instance = importlib.import_module(planning_module)  # 传入模块名
+        self.planning_instance.Init()
+        self.path_x_vec = []
+        self.path_y_vec = []
+        self.path_heading_vec = []
+
+        self.success = False
+        self.computation_time = 0.0
+        self.path_length = 0.0
+        self.escape_heading = 0.0
+        self.gear_shift_cnt_slot = 0
+        self.total_gear_shift_cnt = 0
 
 
-def UpdatePlanningPybind(path_x_vec, path_y_vec, path_heading_vec,
-    planning_module, ego_x, ego_y, ego_heading, obs_x_vec, obs_y_vec, slot_points, ds):
-    path_x_vec = []
-    path_y_vec = []
-    path_heading_vec = []
-    module = importlib.import_module("lib." + planning_module)
-    PlanningClass = getattr(module, "Planning")  # 确认类名为 'Planning'
-    planning_instance = PlanningClass()  # 实例化类
-    planning_instance.Init()
+    def update_planning(self, ego_x, ego_y, ego_heading_rad, obs_x_vec, obs_y_vec, slot_points, ds):
+        self.success = False
+        self.planning_instance.Init()
 
-    if not planning_instance.UpdateByJson(obs_x_vec, obs_y_vec, 2.4, 6.0, ego_x, ego_y, ego_heading, ds):
-        return 0
+        start_time = time.perf_counter()
+        if self.planning_instance.Preprocess(obs_x_vec, obs_y_vec, 2.2, 6.0, ego_x, ego_y, ego_heading_rad, ds):
+            if self.planning_instance.Update():
+                self.success = True
+                end_time = time.perf_counter()
+                self.computation_time = (end_time - start_time) * 1000
 
-    path_x_vec = planning_instance.GetPathEle(0)
-    path_y_vec = planning_instance.GetPathEle(1)
-    path_heading_vec = planning_instance.GetPathEle(2)
-    return 1
+                self.path_x_vec = self.planning_instance.GetPathEle(0)
+                self.path_y_vec = self.planning_instance.GetPathEle(1)
+                self.path_heading_vec = self.planning_instance.GetPathEle(2)
+        return self.success
+
+ego_x = 1.0
+ego_y = 2.0
+ego_heading = 0.0
+obs_x_vec = []
+obs_y_vec = []
+slot_points =[]
+
+planner = PlanningUpdater("lib.parallel_planning_py")
+
+success = planner.update_planning(ego_x, ego_y, ego_heading, obs_x_vec, obs_y_vec, slot_points, 0.02)
+print("success = ", success)
+print("path_x_vec = ", planner.path_x_vec)
+print("path_y_vec = ", planner.path_y_vec)
+print("computation_time_ms = ", planner.computation_time)

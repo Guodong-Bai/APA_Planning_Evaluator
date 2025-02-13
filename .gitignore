@@ -2,3 +2,6 @@ lib
 .so
 planning
 .html
+simulation/code
+simulation/lib
+simulation/out

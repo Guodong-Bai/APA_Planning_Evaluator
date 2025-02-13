@@ -1,21 +1,21 @@
 import os
+import sys
 import json
 import subprocess
 
 # Read configuration file
-with open('simulation_task.json') as f:
+with open('source_config.json') as f:
     param = json.load(f)
 
+output_path = param['output_path']
 planning_address = param['planning']['address']
 planning_branch = param['planning']['branch']
 planning_commit = param['planning']['commit']
+planning_repository = param['planning']['repository']
 planning_lib_address = param['planning']['lib_address']
 
-output_path = param['output_path']
-
-print("planning:")
+print("read planning code:")
 print(f"address: {planning_address}")
-print("address: ", planning_address)
 print(f"branch: {planning_branch}")
 print(f"commit: {planning_commit}")
 
@@ -26,7 +26,7 @@ os.chdir('../code')
 subprocess.run(['git', 'clone', planning_address])
 
 # Update code
-os.chdir('planning')
+os.chdir(planning_repository)
 subprocess.run(['git', 'fetch'])
 subprocess.run(['git', 'reset', '--hard'])
 subprocess.run(['git', 'clean', '-fd', '--force'])

@@ -1,8 +1,9 @@
 {
   "planning": {
-    "branch": "gdbai2/dev",
-    "commit": "da06dca5648bdb3caaddf96ce7be94186f84ba1d",
-    "address": "ssh://git@code.iflytek.com:30004/ZNQC_AutonomousDriving/planning.git",
+    "repository": "APA_Planning",
+    "branch": "develop",
+    "commit": "e84395de3a5f073416fd0c315b8a10ac06c51e4c",
+    "address": "git@github.com:Guodong-Bai/APA_Planning.git",
     "pybind_name": "parallel_planning_py",
     "lib_address": "build/jupyter_pybind/parallel_planning_py.cpython-37m-x86_64-linux-gnu.so"
   },

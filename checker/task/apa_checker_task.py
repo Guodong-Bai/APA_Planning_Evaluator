@@ -10,19 +10,29 @@ from lib.collision_detection import CollisionDetection
 
 
 
-
 # planning_module_list: load different apa path planning modules: module_list, record path planning result.
 planning_module_list, x_bounds, y_bounds, heading_deg_bounds, max_initial_pose_cnt, \
   max_process, output_path = read_variables_from_json(sys.argv[1])
 
-# print("planning_module_list = ", planning_module_list)
-# print(" x_bounds = ", x_bounds)
-# print(" y_bounds = ", y_bounds)
-# print(" heading_deg_bounds = ", heading_deg_bounds)
-# print(" max_initial_pose_cnt = ", max_initial_pose_cnt)
-# print(" max_process = ", max_process)
-# print(" output_path = ", output_path)
 
+
+with open('checker_task.json') as f:
+    data = json.load(f)
+max_process = data['max_process']
+output_path = data['output_path']
+max_initial_pose_cnt = data['max_initial_pose_cnt']
+# planning_module_list = data['planning_module_list']
+x_bounds = [data['x_lower_bound'], data['x_upper_bound']]
+y_bounds = [data['y_lower_bound'], data['y_upper_bound']]
+heading_deg_bounds = [data['heading_deg_lower_bound'], data['heading_deg_upper_bound']]
+
+print(" max_process = ", max_process)
+print(" output_path = ", output_path)
+print(" x_bounds = ", x_bounds)
+print(" y_bounds = ", y_bounds)
+print(" heading_deg_bounds = ", heading_deg_bounds)
+print(" max_initial_pose_cnt = ", max_initial_pose_cnt)
+# print("planning_module_list = ", planning_module_list)
 
 # scenario_list: load obstacles in different scenarios
 obstacle_x_vec = []
