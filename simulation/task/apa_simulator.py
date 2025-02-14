@@ -14,14 +14,12 @@ sys.path.append("../..")
 sys.path.append("../lib")
 sys.path.append("../../jupyter/")
 
-import importlib
 import time
 
 class PlanningUpdater:
     def __init__(self, planning_module):
         # 动态加载模块
-        self.planning_instance = importlib.import_module(planning_module)  # 传入模块名
-        self.planning_instance.Init()
+        self.planning_module = importlib.import_module(planning_module)
         self.path_x_vec = []
         self.path_y_vec = []
         self.path_heading_vec = []
@@ -36,18 +34,18 @@ class PlanningUpdater:
 
     def update_planning(self, ego_x, ego_y, ego_heading_rad, obs_x_vec, obs_y_vec, slot_points, ds):
         self.success = False
-        self.planning_instance.Init()
+        self.planning_module.Init()
 
         start_time = time.perf_counter()
-        if self.planning_instance.Preprocess(obs_x_vec, obs_y_vec, 2.2, 6.0, ego_x, ego_y, ego_heading_rad, ds):
-            if self.planning_instance.Update():
+        if self.planning_module.Preprocess(obs_x_vec, obs_y_vec, 2.2, 6.0, ego_x, ego_y, ego_heading_rad, ds):
+            if self.planning_module.Update():
                 self.success = True
                 end_time = time.perf_counter()
                 self.computation_time = (end_time - start_time) * 1000
 
-                self.path_x_vec = self.planning_instance.GetPathEle(0)
-                self.path_y_vec = self.planning_instance.GetPathEle(1)
-                self.path_heading_vec = self.planning_instance.GetPathEle(2)
+                self.path_x_vec = self.planning_module.GetPathEle(0)
+                self.path_y_vec = self.planning_module.GetPathEle(1)
+                self.path_heading_vec = self.planning_module.GetPathEle(2)
         return self.success
 
 ego_x = 1.0

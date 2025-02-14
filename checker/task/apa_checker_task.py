@@ -14,8 +14,6 @@ from lib.collision_detection import CollisionDetection
 planning_module_list, x_bounds, y_bounds, heading_deg_bounds, max_initial_pose_cnt, \
   max_process, output_path = read_variables_from_json(sys.argv[1])
 
-
-
 with open('checker_task.json') as f:
     data = json.load(f)
 max_process = data['max_process']
