@@ -8,16 +8,16 @@ with open('source_config.json') as f:
     param = json.load(f)
 
 output_path = param['output_path']
-planning_address = param['planning']['address']
 planning_branch = param['planning']['branch']
 planning_commit = param['planning']['commit']
+planning_address = param['planning']['address']
 planning_repository = param['planning']['repository']
 planning_lib_address = param['planning']['lib_address']
 
 print("read planning code:")
-print(f"address: {planning_address}")
 print(f"branch: {planning_branch}")
 print(f"commit: {planning_commit}")
+print(f"address: {planning_address}")
 
 # Clone code
 os.makedirs('../code', exist_ok=True)
@@ -45,10 +45,3 @@ subprocess.run(['cp', planning_lib_address, '../../lib'])
 
 # Go back to the task directory and run the simulator
 os.chdir('../../task')
-
-try:
-    os.mkdir(output_path)
-except:
-    pass
-
-# subprocess.run(['python', 'apa_closed_loop_simulator.py', 'simulation_task.json'])
