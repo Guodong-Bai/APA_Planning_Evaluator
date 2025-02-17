@@ -9,7 +9,7 @@ class CollisionDetection:
     def __init__(self, obs_x_vec, obs_y_vec):
         self.obs_x_vec = obs_x_vec
         self.obs_y_vec = obs_y_vec
-        self.ego_local_x_vec, self.ego_local_y_vec = load_car_params_patch_parking()
+        self.ego_local_x_vec, self.ego_local_y_vec, _ = load_car_params_patch_parking()
         self.coord_tf = coord_transformer()
 
     def check_pose_collided(self, ego_x, ego_y, ego_heading, safe_dist=0.35):

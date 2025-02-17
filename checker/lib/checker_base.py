@@ -6,34 +6,28 @@ from bokeh.io import output_file
 from bokeh.plotting import show
 from lib.table_checker import *
 
-class CheckerResult:
-  def __init__(self):
-    self.data = {}
 
-  def SetValue(self, name, values):
-    self.data[name] = values
-
-  def SetList(self, name, values):
-    self.data[name] = values
-
-  def GetData(self):
-    return self.data
 
 class CheckerBase:
-  def __init__(self, name) -> None:
-    self.name = name
+  def __init__(self, module_name, scemario_name) -> None:
     self.success = False
-    self.checker_result = CheckerResult()
+    self.module_name = module_name
+    self.scemario_name = scemario_name
+    self.initial_pose_vec = []
+    self.checker_result_vec = []
+    self.data = {}
 
-  def GetResult(self):
-    data = self.checker_result.GetData()
-    return data.copy()
 
-  def GetName(self):
-    return self.name
+  def GetModuleName(self):
+    return self.module_name
+
+  def GetScenarioName(self):
+    return self.scemario_name
 
   def IsSuccess(self):
     return self.success
+
+
 
 def find_files_with_extensions(bag_path_list, extensions = ['.record', '.plan', 'no_camera', 'bag']):
   bag_list = []
@@ -80,10 +74,11 @@ def save_list_to_json(lst, filename):
     json.dump(data, file, indent=2)
 
 def read_variables_from_json(json_file):
+  current_dir = os.path.dirname(os.path.abspath(__file__))
+  json_file_path = os.path.join(current_dir, json_file)
+
   with open(json_file) as file:
     data = json.load(file)
-
-  planning_module_list = data['planning_module_list']
 
   x_bounds = [data['x_lower_bound'], data['x_upper_bound']]
   y_bounds = [data['y_lower_bound'], data['y_upper_bound']]
@@ -94,7 +89,7 @@ def read_variables_from_json(json_file):
   max_process = data['max_process']
   output_path = data['output_path']
 
-  return planning_module_list, x_bounds, y_bounds, heading_deg_bounds, max_initial_pose_cnt, max_process, output_path
+  return  x_bounds, y_bounds, heading_deg_bounds, max_initial_pose_cnt, max_process, output_path
 
 def save_list_to_table(lst, htmlname):
   table = table_checker(lst)

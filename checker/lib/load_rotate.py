@@ -55,3 +55,18 @@ def global2local(x, y, ox, oy, otheta):
     y1 = y-oy
     tx, ty = rotate(x1, y1, -otheta)
     return (tx, ty)
+
+
+def load_car_box(path_x_vec, path_y_vec, path_theta_vec, car_xb, car_yb):
+  car_box_x_vec = []
+  car_box_y_vec = []
+  for k in range(len(path_x_vec)):
+    car_xn = []
+    car_yn = []
+    for i in range(len(car_xb)):
+      tmp_x, tmp_y = local2global(car_xb[i], car_yb[i], path_x_vec[k], path_y_vec[k], path_theta_vec[k])
+      car_xn.append(tmp_x)
+      car_yn.append(tmp_y)
+    car_box_x_vec.append(car_xn)
+    car_box_y_vec.append(car_yn)
+  return car_box_x_vec, car_box_y_vec

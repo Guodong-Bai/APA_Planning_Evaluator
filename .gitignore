@@ -5,3 +5,6 @@ planning
 simulation/code
 simulation/lib
 simulation/out
+.pyc
+*front_
+__pycache__

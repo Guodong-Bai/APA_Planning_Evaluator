@@ -1,3 +1,4 @@
+import glob
 import json
 import bokeh
 import sys, os, copy
@@ -13,18 +14,8 @@ from bokeh.models import CustomJS, ColumnDataSource, WheelZoomTool
 
 sys.path.append("..")
 sys.path.append("../..")
-
+from checker.lib.load_json import *
 from checker.lib.load_rotate import *
-
-
-def load_json(file_path):
-    with open(file_path, "r") as file:
-        return json.load(file)
-
-
-def save_json(data, file_path):
-    with open(file_path, "w") as file:
-        json.dump(data, file, indent=4)
 
 
 def transform_obs_car(obs_car, heading, y_offset, x_offset_adjustment):
@@ -34,29 +25,58 @@ def transform_obs_car(obs_car, heading, y_offset, x_offset_adjustment):
         rotated_y += y_offset
         transformed_x_vec.append(rotated_x)
         transformed_y_vec.append(rotated_y)
+
     min_x = min(transformed_x_vec)
-    transformed_x_vec = [
-        x - min_x + x_offset_adjustment for x in transformed_x_vec
-    ]
+    transformed_x_vec = [x - min_x + x_offset_adjustment for x in transformed_x_vec]
+
     return transformed_x_vec, transformed_y_vec
 
 
 def generate_car_obs_vec(original_car_pt_vec, car_heading, car_y_offset,
                          obs_to_slot_line, is_front, slot_length):
     dx = slot_length + obs_to_slot_line if is_front else -obs_to_slot_line
+
     rear_x_vec, rear_y_vec = transform_obs_car(original_car_pt_vec, car_heading,
                                                car_y_offset, dx)
     if is_front:
         min_x = min(rear_x_vec)
-
-        rear_x_vec = [
-            x - min_x + obs_to_slot_line + slot_length for x in rear_x_vec
-        ]
+        deta_x = -min_x + obs_to_slot_line + slot_length
+        rear_x_vec = [x + deta_x for x in rear_x_vec]
     else:
         max_x = max(rear_x_vec)
-        rear_x_vec = [x - max_x - obs_to_slot_line for x in rear_x_vec]
+        deta_x = - max_x - obs_to_slot_line
+        rear_x_vec = [x + deta_x for x in rear_x_vec]
 
     return rear_x_vec, rear_y_vec
+
+
+def construct_all_scenarios():
+    cur_file_path = os.path.abspath(__file__)
+
+    cur_path = os.path.dirname(cur_file_path)
+
+    param_path = os.path.join(cur_path, 'source_config.json')
+
+    data = load_json(param_path)
+    scenario_param = data["scenario"]
+
+    slot_width = scenario_param["slot_width"]
+    slot_length = scenario_param["slot_length"]
+    channel_width_vec = scenario_param["channel_width_vec"]
+    lon_available_space_vec = scenario_param["lon_available_space_vec"]
+
+    for channel_width in channel_width_vec:
+        for lon_available_space in lon_available_space_vec:
+            construct_scenario(slot_width=slot_width,
+                               slot_length=slot_length,
+                               dx=lon_available_space - slot_length,
+                               channel_width=channel_width)
+    parent_dir = os.path.dirname(cur_path)
+    data_dir = os.path.abspath(os.path.join(parent_dir, 'data'))
+
+    front_files = glob.glob(os.path.join(data_dir, 'front*'))
+
+    return front_files
 
 
 def construct_scenario(slot_width=2.2,
@@ -64,21 +84,24 @@ def construct_scenario(slot_width=2.2,
                        curb_offset=0.4,
                        dx=0.4,
                        channel_width=5.5,
-                       front_car_y_offset=0.4,
-                       front_car_heading=5.0 / 57.3,
+                       front_car_y_offset=0.3,
+                       front_car_heading=1.0 / 57.3,
                        rear_car_y_offset=0.0,
                        rear_car_heading=-2.0 / 57.3,
                        is_front_occupied=True,
                        is_rear_occupied=True):
-    # channel car
+    # channel obs car
     x_offset_vec = [1.2, 3.6, 6.0, 8.9, 12.3]
     y_offset_vec = [-0.3, 0.3, 0.6, 0.2, 0.4]
     heading_offset_vec = [0.0, 0.0, 0.0, 6.0 / 57.3, 70 / 57.3]
 
-    curb_file_name = "../data/curb.json"
-    obs_car_file_name = "../data/obs_car_pt.json"
-    curb_data = load_json(curb_file_name)
-    obs_car = load_json(obs_car_file_name)
+    curb_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                             '../data/curb.json')
+    obs_car_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                '../data/obs_car_pt.json')
+
+    curb_data = load_json(curb_path)
+    obs_car = load_json(obs_car_path)
 
     # Initialization
     obs_x_vec, obs_y_vec = [], []
@@ -113,6 +136,9 @@ def construct_scenario(slot_width=2.2,
     target_corner_y_vec = [
         half_slot_width, half_slot_width, -half_slot_width, -half_slot_width
     ]
+
+    front_corner_x_vec = [x + slot_length for x in target_corner_x_vec]
+    rear_corner_x_vec = [x - slot_length for x in target_corner_x_vec]
 
     # Process channel cars
     channel_matrix = []
@@ -149,14 +175,22 @@ def construct_scenario(slot_width=2.2,
         "obs_y": obs_y_vec,
         "target_corner_x": target_corner_x_vec,
         "target_corner_y": target_corner_y_vec,
+        "front_corner_x": front_corner_x_vec,
+        "rear_corner_x": rear_corner_x_vec,
         "channel_matrix": channel_matrix,
         "front_obs_car_matrix": front_obs_car_matrix,
         "rear_obs_car_matrix": rear_obs_car_matrix,
     }
 
-    output_file_name = f"../data/{'front_occupied' if is_front_occupied else 'front_vacant'}_{'rear_occupied' if is_rear_occupied else 'rear_vacant'}_lon_{slot_length+dx}_channel_width_{channel_width}.json"
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    output_folder = os.path.join(current_dir, '../data')
+
+    output_file_name = os.path.join(
+        output_folder,
+        f"{'front_occupied' if is_front_occupied else 'front_vacant'}_"
+        f"{'rear_occupied' if is_rear_occupied else 'rear_vacant'}_"
+        f"lon_{slot_length+dx}_channel_width_{channel_width}.json")
     save_json(data, output_file_name)
-    print(output_file_name)
 
 
 if __name__ == "__main__":

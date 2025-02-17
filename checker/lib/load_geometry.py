@@ -82,7 +82,7 @@ def cal_point_to_line_seg_dist(point, line):
     elif is_double_equal(cos_OAB, 1.0) and is_double_equal(cos_OBA, 1.0):
         dist = 0.0
     else:
-        dist = min(np.linalg.norm(line.pB - point), np.linalg.norm(line.pA - point).norm())
+        dist = min(np.linalg.norm(line.pB - point), np.linalg.norm(line.pA - point))
 
     return dist
 

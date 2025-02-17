@@ -8,5 +8,12 @@
     "lib_address": "build/jupyter_pybind/parallel_planning_py.cpython-37m-x86_64-linux-gnu.so"
   },
 
+  "scenario":{
+    "slot_width": 2.2,
+    "slot_length": 6.0,
+    "lon_available_space_vec": [6.0],
+    "channel_width_vec": [5.0]
+  },
+
   "output_path": "../out"
 }
