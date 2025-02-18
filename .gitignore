@@ -1,10 +1,23 @@
-lib
-.so
-planning
-.html
-simulation/code
-simulation/lib
-simulation/out
-.pyc
-*front_
+# Ignore compiled Python files
+*.pyc
 __pycache__
+
+*.so
+*.a
+
+# Ignore specific directories
+simulation/code/
+simulation/lib/
+simulation/out/
+
+# Ignore specific HTML files
+*.html
+
+# Ignore any files starting with "front_"
+code
+
+# Ignore planning (if it refers to a directory or files)
+planning/
+
+# Ignore any "out" directories at any level
+out/

@@ -6,9 +6,9 @@
   "heading_deg_lower_bound": -35.0,
   "heading_deg_upper_bound": 35.0,
 
-  "max_initial_pose_cnt": 40,
+  "max_initial_pose_cnt": 100,
 
-  "max_process": 30,
+  "max_process": 10,
 
   "output_path": "../out"
 }

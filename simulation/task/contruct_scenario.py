@@ -85,9 +85,9 @@ def construct_scenario(slot_width=2.2,
                        dx=0.4,
                        channel_width=5.5,
                        front_car_y_offset=0.3,
-                       front_car_heading=1.0 / 57.3,
-                       rear_car_y_offset=0.0,
-                       rear_car_heading=-2.0 / 57.3,
+                       front_car_heading=3.0 / 57.3,
+                       rear_car_y_offset=0.9,
+                       rear_car_heading=-8.0 / 57.3,
                        is_front_occupied=True,
                        is_rear_occupied=True):
     # channel obs car

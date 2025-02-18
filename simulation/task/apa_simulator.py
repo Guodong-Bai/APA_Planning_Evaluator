@@ -28,12 +28,12 @@ class PlanningResult:
 
     def Reset(self):
         self.success = False
+        self.initial_pose = []
         self.path_x_vec = []
         self.path_y_vec = []
         self.path_heading_vec = []
         self.gear_vec = []
         self.gear_shift_idx_vec = []
-
 
         self.path_length = 0.0
         self.escape_heading = 0.0
@@ -44,6 +44,7 @@ class PlanningResult:
 
     def TransferToJson(self):
         self.data["success"] = self.success
+        self.data["initial_pose"] = self.initial_pose
         self.data["path_x_vec"] = self.path_x_vec
         self.data["path_y_vec"] = self.path_y_vec
         self.data["path_heading_vec"] = self.path_heading_vec
@@ -57,10 +58,12 @@ class PlanningResult:
         self.data["gear_shift_cnt_slot"] = self.gear_shift_cnt_slot
         self.data["total_gear_shift_cnt"] = self.total_gear_shift_cnt
         return self.data
-    
+
 
     def PrintInfo(self):
         print("success = ", self.success)
+        print("initial_pose = ", self.initial_pose)
+
         if self.success:
 
             print("path_length = ", self.path_length)

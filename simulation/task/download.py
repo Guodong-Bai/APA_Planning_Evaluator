@@ -3,9 +3,10 @@ import sys
 import json
 import subprocess
 
+from checker.lib.load_json import load_json
+
 # Read configuration file
-with open('source_config.json') as f:
-    param = json.load(f)
+param = load_json("source_config.json")
 
 output_path = param['output_path']
 planning_branch = param['planning']['branch']
@@ -30,7 +31,8 @@ os.chdir(planning_repository)
 subprocess.run(['git', 'fetch'])
 subprocess.run(['git', 'reset', '--hard'])
 subprocess.run(['git', 'clean', '-fd', '--force'])
-subprocess.run(['git', 'checkout', planning_commit])
+subprocess.run(['git', 'reset' '--hard', 'origin/', planning_branch])
+# subprocess.run(['git', 'checkout', planning_commit])
 subprocess.run(['git', 'submodule', 'foreach', 'git', 'reset', '--hard'])
 subprocess.run(['git', 'submodule', 'foreach', 'git', 'clean', '--fd', '--force'])
 subprocess.run(['git', 'submodule', 'update', '--init', '--recursive'])
