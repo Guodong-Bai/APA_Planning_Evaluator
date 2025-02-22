@@ -15,7 +15,7 @@ sys.path.append("../out")
 
 from IPython.core.display import display, HTML
 from lib.load_json import load_json
-from lib.load_rotate import coord_transformer, load_car_box
+from lib.load_rotate import coord_transformer
 from lib.load_struct import load_car_params_patch_parking, load_ego_car_box
 
 display(HTML("<style>.container { width:95% !important;  }</style>"))
@@ -26,13 +26,8 @@ data_slot = ColumnDataSource(data = {'x_vec':[], 'y_vec':[]})
 data_other_slot = ColumnDataSource(data = {'x_vec':[], 'y_vec':[]})
 data_obs = ColumnDataSource(data = {'x_vec':[], 'y_vec':[]})
 data_path = ColumnDataSource(data = {'x_vec':[], 'y_vec':[], 'theta_vec':[]})
-data_path_box = ColumnDataSource(data = {'x_vec':[], 'y_vec':[]})
-
 data_initial_pose = ColumnDataSource(data = {'x':[], 'y':[], 'theta':[]})
 data_initial_car_vertex = ColumnDataSource(data = {'x_vec':[], 'y_vec':[]})
-
-data_target_pose = ColumnDataSource(data = {'x':[], 'y':[], 'theta':[]})
-data_target_car_vertex = ColumnDataSource(data = {'x_vec':[], 'y_vec':[]})
 
 ego_local_x_vec, ego_local_y_vec, _ = load_car_params_patch_parking()
 planning_res = load_json("../out/proposed_geometric_method.json")
@@ -117,7 +112,8 @@ fig1.scatter("x_vec", "y_vec", source=data_obs, size=3, color='grey',legend_labe
 fig1.scatter("x", "y", source = data_initial_pose, size=3, color='red',legend_label = 'Initial pose')
 fig1.patch('x_vec', 'y_vec', source = data_initial_car_vertex, fill_color='blue', line_color='blue', fill_alpha=0.3, line_width = 0.3)
 
-fig1.patches('x_vec', 'y_vec', source = data_path_box, fill_color='black', line_color='black', fill_alpha=0.01, line_width = 0.3, legend_label = 'Envilope')
+
+
 
 fig1.legend.label_text_font = "Times New Roman"  # 设置图例字体类型
 fig1.legend.label_text_font_size = '14pt'  # 设置图例字体大小
@@ -133,16 +129,16 @@ class LocalViewSlider:
             layout=ipywidgets.Layout(width="25%"),
             description="is front occupied",
             min=0,
-            max=30,
+            max=4,
             value=0,
             step=1,
         )
 
-        self.case_idx_slider = ipywidgets.IntSlider(
+        self.failed_case_idx_slider = ipywidgets.IntSlider(
             layout=ipywidgets.Layout(width="60%"),
             description="is front occupied",
             min=0,
-            max=50,
+            max=20,
             value=0,
             step=1,
         )
@@ -150,9 +146,9 @@ class LocalViewSlider:
         ipywidgets.interact(
             slider_callback,
             scenario_key= self.scenario_slider,
-            case_idx = self.case_idx_slider
+            failed_case_idx = self.failed_case_idx_slider
         )
-def slider_callback(scenario_key, case_idx):
+def slider_callback(scenario_key, failed_case_idx):
     key =str(scenario_key)
     failed_case_res = {}
 
@@ -178,55 +174,33 @@ def slider_callback(scenario_key, case_idx):
             'y_vec': [target_slot_y_vec, target_slot_y_vec]
         })
 
-        one_case_res = planning_res[key][case_idx]
 
-        initial_pose = one_case_res["initial_pose"]
-        data_initial_pose.data.update({
-                'x': [initial_pose[0]],
-                'y': [initial_pose[1]],
-                'theta': [initial_pose[2]],
-                })
-        car_global_vertex_x_vec, car_global_vertex_y_vec = load_ego_car_box(initial_pose[0], initial_pose[1], initial_pose[2], ego_local_x_vec, ego_local_y_vec)
+        failed_case_idx_vec = []
+        planning_res_vec = planning_res[key]
+        for i in range(len(planning_res_vec)):
+            if planning_res_vec[i]["success"] == False:
+                failed_case_idx_vec.append(i)
 
-        data_initial_car_vertex.data.update({
-            'x_vec': car_global_vertex_x_vec,
-            'y_vec': car_global_vertex_y_vec
-        })
+        failed_case_idx_vec_size = len(failed_case_idx_vec)
+        print("failed_case_idx_vec_size = ", failed_case_idx_vec_size)
+        if  failed_case_idx_vec_size> 0 and failed_case_idx <failed_case_idx_vec_size:
+            idx = failed_case_idx_vec[failed_case_idx]
+            failed_case_res = planning_res_vec[idx]
 
-        if one_case_res["success"] == True:
-            path_x_vec = one_case_res["path_x_vec"]
-            path_y_vec = one_case_res["path_y_vec"]
-            path_heading_vec = one_case_res["path_heading_vec"]
-
-            data_target_pose.data.update({
-                'x': [path_x_vec[-1]],
-                'y': [path_y_vec[-1]],
-                'theta': [path_heading_vec[-1]],
+            failed_pose = failed_case_res["initial_pose"]
+            print("failed pose = ", failed_pose)
+            data_initial_pose.data.update({
+                'x': [failed_pose[0]],
+                'y': [failed_pose[1]],
+                'theta': [failed_pose[2]],
             })
 
-            target_car_global_vertex_x_vec, target_car_global_vertex_y_vec = load_ego_car_box(path_x_vec[-1], path_y_vec[-1], path_heading_vec[-1], ego_local_x_vec, ego_local_y_vec)
-            data_target_car_vertex.data.update({
-                'x_vec': target_car_global_vertex_x_vec,
-                'y_vec': target_car_global_vertex_y_vec
+            car_global_vertex_x_vec, car_global_vertex_y_vec = load_ego_car_box(failed_pose[0], failed_pose[1], failed_pose[2], ego_local_x_vec, ego_local_y_vec)
+
+            data_initial_car_vertex.data.update({
+                'x_vec': car_global_vertex_x_vec,
+                'y_vec': car_global_vertex_y_vec
             })
-
-            data_path.data.update({
-                'x_vec': path_x_vec,
-                'y_vec': path_y_vec,
-                'theta_vec': path_heading_vec
-            })
-
-            box_x_vec, box_y_vec = load_car_box(path_x_vec, path_y_vec, path_heading_vec, ego_local_x_vec, ego_local_y_vec)
-            data_path_box.data.update({
-                'x_vec': box_x_vec,
-                'y_vec': box_y_vec,
-            })
-
-            print("gear shift cnt = ", one_case_res["gear_shift_cnt_slot"])
-            print("computation_time = ", one_case_res["computation_time"])
-            print("escape_heading = ", one_case_res["escape_heading"] * 57.3)
-
-
 
     push_notebook()
 

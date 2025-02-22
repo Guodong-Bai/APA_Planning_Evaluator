@@ -4,11 +4,16 @@ __pycache__
 
 *.so
 *.a
+*front_
+*.png
+
+
 
 # Ignore specific directories
 simulation/code/
 simulation/lib/
 simulation/out/
+simulation/data/
 
 # Ignore specific HTML files
 *.html

@@ -1,7 +1,7 @@
 import glob
 import json
 import bokeh
-import sys, os, copy
+import sys, os, copy, re
 import bokeh.plotting as bkp
 
 from math import pi
@@ -85,8 +85,9 @@ def construct_all_scenarios():
     data_dir = os.path.abspath(os.path.join(parent_dir, "data"))
 
     front_files = glob.glob(os.path.join(data_dir, "front*"))
+    sorted_files = sorted(front_files, key=lambda f: float(re.search(r"lon_([\d\.]+)", f).group(1)) if re.search(r"lon_([\d\.]+)", f) else float('inf'))
 
-    return front_files
+    return sorted_files
 
 
 def construct_scenario(
@@ -95,10 +96,10 @@ def construct_scenario(
     curb_offset=0.4,
     dx=0.4,
     channel_width=5.5,
-    front_car_y_offset=0.3,
-    front_car_heading=3.0 / 57.3,
-    rear_car_y_offset=0.76,
-    rear_car_heading=-8.0 / 57.3,
+    front_car_y_offset=0.2,
+    front_car_heading=0.0 / 57.3,
+    rear_car_y_offset=0.2,
+    rear_car_heading=0 / 57.3,
     is_front_occupied=True,
     is_rear_occupied=True,
 ):
@@ -107,9 +108,13 @@ def construct_scenario(
     y_offset_vec = [-0.3, 0.3, 0.6, 0.2, 0.4]
     heading_offset_vec = [0.0, 0.0, 0.0, 6.0 / 57.3, 70 / 57.3]
 
-    current_dir = os.getcwd()
-    curb_path = os.path.join(current_dir, "../data/curb.json")
-    obs_car_path = os.path.join(current_dir, "../data/obs_car_pt.json")
+
+    cur_file_path = os.path.abspath(__file__)
+    cur_path = os.path.dirname(cur_file_path)
+
+
+    curb_path = os.path.join(cur_path, "../data/curb.json")
+    obs_car_path = os.path.join(cur_path, "../data/obs_car_pt.json")
 
     curb_data = load_json(curb_path)
     obs_car = load_json(obs_car_path)
@@ -206,7 +211,7 @@ def construct_scenario(
     }
 
     current_dir = os.getcwd()
-    output_folder = os.path.join(current_dir, "../data")
+    output_folder = os.path.join(cur_path, "../data")
 
     output_file_name = os.path.join(
         output_folder,
@@ -223,7 +228,6 @@ if __name__ == "__main__":
 
     data = load_json(name)
 
-    output_notebook()
     # ## for debug json data
     fig1 = bkp.figure(
         x_axis_label="x",
@@ -332,5 +336,5 @@ if __name__ == "__main__":
     # legend
     # fig1.legend.click_policy = 'hide'
 
-    handle = show(fig1, notebook_handle=True)
-    push_notebook(handle=handle)
+    show(fig1)
+
