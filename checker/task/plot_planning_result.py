@@ -1,32 +1,37 @@
 
+import sys
+import ipywidgets
+
 import bokeh.plotting as bkp
 from bokeh.events import Tap
+from bokeh.layouts import row
+from bokeh.io import output_notebook, push_notebook
 from bokeh.models import ColumnDataSource, WheelZoomTool, HoverTool, TapTool, CustomJS
 
-
-from bokeh.io import output_notebook, push_notebook
+sys.path.append("..")
+sys.path.append("../..")
+sys.path.append("../lib")
+sys.path.append("../out")
 
 from IPython.core.display import display, HTML
-from checker.lib.load_rotate import coord_transformer
-from checker.lib.load_struct import load_car_params_patch_parking
-
-
-
-
-
-
-
+from lib.load_json import load_json
+from lib.load_rotate import coord_transformer
+from lib.load_struct import load_car_params_patch_parking, load_ego_car_box
 
 display(HTML("<style>.container { width:95% !important;  }</style>"))
 output_notebook()
 
-ego_local_x_vec, ego_local_y_vec, _ = load_car_params_patch_parking()
 coord_tf = coord_transformer()
-
 data_slot = ColumnDataSource(data = {'x_vec':[], 'y_vec':[]})
 data_other_slot = ColumnDataSource(data = {'x_vec':[], 'y_vec':[]})
 data_obs = ColumnDataSource(data = {'x_vec':[], 'y_vec':[]})
 data_path = ColumnDataSource(data = {'x_vec':[], 'y_vec':[], 'theta_vec':[]})
+data_initial_pose = ColumnDataSource(data = {'x':[], 'y':[], 'theta':[]})
+data_initial_car_vertex = ColumnDataSource(data = {'x_vec':[], 'y_vec':[]})
+
+ego_local_x_vec, ego_local_y_vec, _ = load_car_params_patch_parking()
+planning_res = load_json("../out/proposed_geometric_method.json")
+scenario = load_json("../out/initial_pose_obs_slot.json")
 
 
 fig1 = bkp.figure(width=1200, height=800, match_aspect = True, aspect_scale=1)
@@ -89,24 +94,118 @@ callback = CustomJS(args=dict(source=source, line_source=line_source, text_sourc
 # Attach the callback to the Tap event on the plot
 fig1.js_on_event(Tap, callback)
 
-
 fig1.line('x_vec','y_vec',source =data_path,  line_width = 3.0, line_color = 'green', line_dash = 'solid',legend_label = 'Car Path', visible = True)
 
-fig1.line('x_vec','y_vec',source =data_slot,  line_width = 2.0, line_color = 'black', line_dash = 'solid',legend_label = 'slot', visible = True)
+fig1.patch('x_vec', 'y_vec', source=data_slot,
+             line_width=1.0,
+             line_color='blue',
+             fill_alpha=0.5,
+             legend_label='Target slots', visible=True)
 
-fig1.multi_line('x_vec','y_vec',source =data_other_slot,  line_width = 2.0, line_color = 'black', line_dash = 'solid',legend_label = 'slot', visible = True)
-
+fig1.patches('x_vec', 'y_vec', source=data_other_slot,
+             line_width=0,
+             line_color='blue',
+             fill_alpha=0.2,
+             legend_label='Nearby slots', visible=True)
 fig1.scatter("x_vec", "y_vec", source=data_obs, size=3, color='grey',legend_label = 'External obstacles')
+
+fig1.scatter("x", "y", source = data_initial_pose, size=3, color='red',legend_label = 'Initial pose')
+fig1.patch('x_vec', 'y_vec', source = data_initial_car_vertex, fill_color='blue', line_color='blue', fill_alpha=0.3, line_width = 0.3)
+
+
 
 
 fig1.legend.label_text_font = "Times New Roman"  # 设置图例字体类型
 fig1.legend.label_text_font_size = '14pt'  # 设置图例字体大小
 fig1.legend.location = 'top_left'
 
-fig1.toolbar.active_scroll = fig1.select_one(WheelZoomTool)
 fig1.legend.click_policy = 'hide'
+fig1.toolbar.active_scroll = fig1.select_one(WheelZoomTool)
 
-data = 
+
+class LocalViewSlider:
+    def __init__(self, slider_callback):
+        self.scenario_slider = ipywidgets.IntSlider(
+            layout=ipywidgets.Layout(width="25%"),
+            description="is front occupied",
+            min=0,
+            max=4,
+            value=0,
+            step=1,
+        )
+
+        self.failed_case_idx_slider = ipywidgets.IntSlider(
+            layout=ipywidgets.Layout(width="60%"),
+            description="is front occupied",
+            min=0,
+            max=20,
+            value=0,
+            step=1,
+        )
+
+        ipywidgets.interact(
+            slider_callback,
+            scenario_key= self.scenario_slider,
+            failed_case_idx = self.failed_case_idx_slider
+        )
+def slider_callback(scenario_key, failed_case_idx):
+    key =str(scenario_key)
+    failed_case_res = {}
+
+    if key in planning_res:
+        scenario_data = scenario[key]["scenario_data"]
+        obs_x_vec = scenario_data["obs_x"]
+        obs_y_vec = scenario_data["obs_y"]
+        data_obs.data.update({
+            'x_vec': obs_x_vec,
+            'y_vec': obs_y_vec
+        })
+
+        target_slot_x_vec = scenario_data["target_corner_x"]
+        target_slot_y_vec = scenario_data["target_corner_y"]
+        front_slot_x_vec = scenario_data["front_corner_x"]
+        rear_slot_x_vec = scenario_data["rear_corner_x"]
+        data_slot.data.update({
+            'x_vec': target_slot_x_vec,
+            'y_vec': target_slot_y_vec
+        })
+        data_other_slot.data.update({
+            'x_vec': [front_slot_x_vec, rear_slot_x_vec],
+            'y_vec': [target_slot_y_vec, target_slot_y_vec]
+        })
+
+
+        failed_case_idx_vec = []
+        planning_res_vec = planning_res[key]
+        for i in range(len(planning_res_vec)):
+            if planning_res_vec[i]["success"] == False:
+                failed_case_idx_vec.append(i)
+
+        failed_case_idx_vec_size = len(failed_case_idx_vec)
+        print("failed_case_idx_vec_size = ", failed_case_idx_vec_size)
+        if  failed_case_idx_vec_size> 0 and failed_case_idx <failed_case_idx_vec_size:
+            idx = failed_case_idx_vec[failed_case_idx]
+            failed_case_res = planning_res_vec[idx]
+
+            failed_pose = failed_case_res["initial_pose"]
+            print("failed pose = ", failed_pose)
+            data_initial_pose.data.update({
+                'x': [failed_pose[0]],
+                'y': [failed_pose[1]],
+                'theta': [failed_pose[2]],
+            })
+
+            car_global_vertex_x_vec, car_global_vertex_y_vec = load_ego_car_box(failed_pose[0], failed_pose[1], failed_pose[2], ego_local_x_vec, ego_local_y_vec)
+
+            data_initial_car_vertex.data.update({
+                'x_vec': car_global_vertex_x_vec,
+                'y_vec': car_global_vertex_y_vec
+            })
+
+    push_notebook()
+
+bkp.show(row(fig1), notebook_handle=True)
+slider_class = LocalViewSlider(slider_callback)
 
 
 

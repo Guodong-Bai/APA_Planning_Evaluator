@@ -1,4 +1,4 @@
 #!/bin/bash
-cd simulation/task
-
-python apa_simulation_task.py
+cd checker/task
+python generate_initial_pose.py
+python generate_planning_result.py

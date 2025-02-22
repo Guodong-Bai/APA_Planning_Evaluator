@@ -50,37 +50,48 @@ def process_scenario(scenario_data):
     # Filter out None results (in case of failure)
     return [result for result in result_vec if result is not None]
 
+if __name__ == "__main__":
+    # Read the configuration from JSON and process the data
+    x_bounds, y_bounds, heading_deg_bounds, max_initial_pose_cnt, max_process, output_path = read_variables_from_json("checker_task.json")
 
-# Read the configuration from JSON and process the data
-x_bounds, y_bounds, heading_deg_bounds, max_initial_pose_cnt, max_process, output_path = read_variables_from_json("checker_task.json")
+    # Ensure the output path exists
+    os.makedirs(output_path, exist_ok=True)
 
-# Ensure the output path exists
-os.makedirs(output_path, exist_ok=True)
+    output_file_path = os.path.join(output_path, "initial_pose_obs_slot.json")
 
-output_file_path = os.path.join(output_path, "initial_pose_obs_slot.json")
+    planner_res = {}
+    start_time = time.time()
+    param_dict = load_json(output_file_path)
 
-# Load existing scenario data
-param_dict = load_json(output_file_path)
-planner_res = {}
+    # Use multiprocessing to process all scenarios
+    with multiprocessing.Pool(processes=max_process) as pool:
+        # Passing each scenario to process_scenario function
+        results = pool.map(process_scenario, [param_dict[scenario_key] for scenario_key in param_dict])
 
-# Start time for performance calculation
-start_time = time.time()
+    # Store the results in planner_res
+    for i, result in enumerate(results):
+        scenario_key = str(i)
+        planner_res[scenario_key] = result
 
-# Use multiprocessing to process all scenarios
-with multiprocessing.Pool(processes=max_process) as pool:
-    # Passing each scenario to process_scenario function
-    results = pool.map(process_scenario, [param_dict[scenario_key] for scenario_key in param_dict])
+    # End time for performance calculation
+    end_time = time.time()
+    time_taken = end_time - start_time
+    print(f"Time taken for computation: {time_taken:.2f} seconds")
 
-# Store the results in planner_res
-for i, result in enumerate(results):
-    scenario_key = str(i)
-    planner_res[scenario_key] = result
+    # Save the results to a file
+    output_file_path = os.path.join(output_path, "proposed_geometric_method.json")
+    save_json(planner_res, output_file_path)
 
-# End time for performance calculation
-end_time = time.time()
-time_taken = end_time - start_time
-print(f"Time taken for computation: {time_taken:.2f} seconds")
+    for i, scenario_res_vec in planner_res.items():
+        success_cnt = 0
+        total_cnt = len(scenario_res_vec)
 
-# Save the results to a file
-output_file_path = os.path.join(output_path, "proposed_geometric_method.json")
-save_json(planner_res, output_file_path)
+        for result in scenario_res_vec:
+            if result["success"]:
+                success_cnt += 1
+            else:
+                print("failed initial pose = ", result["initial_pose"])
+
+        success_rate = success_cnt / total_cnt if total_cnt > 0 else 0
+
+        print(f"Scenario {i} success rate = {success_rate:.2%}")

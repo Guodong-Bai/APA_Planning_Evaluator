@@ -3,6 +3,10 @@ import sys
 import json
 import subprocess
 
+sys.path.append("..")
+sys.path.append("../..")
+sys.path.append("../../checker")
+
 from checker.lib.load_json import load_json
 
 # Read configuration file

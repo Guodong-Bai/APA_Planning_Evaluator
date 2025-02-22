@@ -104,6 +104,8 @@ class PlanningUpdater:
 
     def update_planning(self, ego_x, ego_y, ego_heading_rad, obs_x_vec, obs_y_vec, slot_points, ds):
         self.result.Reset()
+        self.result.initial_pose = [ego_x, ego_y, ego_heading_rad]
+
         self.planning_module.Init()
 
         x_vec = slot_points[0]
