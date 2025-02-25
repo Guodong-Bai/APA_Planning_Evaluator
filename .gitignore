@@ -17,6 +17,8 @@ simulation/data/
 
 # Ignore specific HTML files
 *.html
+*.pdf
+*.svg
 
 # Ignore any files starting with "front_"
 code
