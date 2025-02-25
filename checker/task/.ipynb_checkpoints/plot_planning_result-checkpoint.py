@@ -35,9 +35,7 @@ data_target_pose = ColumnDataSource(data = {'x':[], 'y':[], 'theta':[]})
 data_target_car_vertex = ColumnDataSource(data = {'x_vec':[], 'y_vec':[]})
 
 ego_local_x_vec, ego_local_y_vec, _ = load_car_params_patch_parking()
-# planning_res = load_json("../out/proposed_geometric_method.json")
-planning_res = load_json("../out/traditional_geometric_method.json")
-
+planning_res = load_json("../out/proposed_geometric_method.json")
 scenario = load_json("../out/initial_pose_obs_slot.json")
 
 
@@ -227,7 +225,6 @@ def slider_callback(scenario_key, case_idx):
             print("gear shift cnt = ", one_case_res["gear_shift_cnt_slot"])
             print("computation_time = ", one_case_res["computation_time"])
             print("escape_heading = ", one_case_res["escape_heading"] * 57.3)
-            print("path points size = ", len(path_x_vec))
 
 
 

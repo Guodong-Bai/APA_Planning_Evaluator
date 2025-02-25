@@ -1,3 +1,4 @@
+import math
 import numpy as np
 from math import fmod, pi, fabs, sqrt
 
@@ -86,11 +87,45 @@ def cal_point_to_line_seg_dist(point, line):
 
     return dist
 
-# for test
-if __name__ == "__main__":
-    point = np.array([0.5,1])
-    line = LineSegment(0, 0, 1, 1)
-    print("line = ", line.length)
-    print("line = ", line.pA)
-    print("line = ", line.pB)
-    print("dist = ", cal_point_to_line_seg_dist(point, line))
+
+def circle_from_points(p1, p2, p3, tol=1e-9):
+
+    (x1, y1), (x2, y2), (x3, y3) = p1, p2, p3
+
+    d = 2 * (x1*(y2 - y3) + x2*(y3 - y1) + x3*(y1 - y2))
+
+    if abs(d) < tol:
+        raise ValueError("三点共线或近似共线，无法构成一个唯一的圆")
+
+    ux = ((x1**2 + y1**2)*(y2 - y3) +
+          (x2**2 + y2**2)*(y3 - y1) +
+          (x3**2 + y3**2)*(y1 - y2)) / d
+    uy = ((x1**2 + y1**2)*(x3 - x2) +
+          (x2**2 + y2**2)*(x1 - x3) +
+          (x3**2 + y3**2)*(x2 - x1)) / d
+
+
+    radius = math.sqrt((ux - x1)**2 + (uy - y1)**2)
+
+    return (ux, uy), radius
+
+if __name__ == '__main__':
+    # 示例：定义三个点
+    p1 = (0, 0)
+    p2 = (1, 0)
+    p3 = (0, 1)
+
+    try:
+        center, radius = circle_from_points(p1, p2, p3)
+        print("圆心坐标为:", center)
+        print("圆的半径为:", radius)
+    except ValueError as e:
+        print(e)
+# # for test
+# if __name__ == "__main__":
+#     point = np.array([0.5,1])
+#     line = LineSegment(0, 0, 1, 1)
+#     print("line = ", line.length)
+#     print("line = ", line.pA)
+#     print("line = ", line.pB)
+#     print("dist = ", cal_point_to_line_seg_dist(point, line))
