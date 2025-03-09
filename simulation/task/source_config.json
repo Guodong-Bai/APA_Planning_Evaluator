@@ -4,6 +4,7 @@
     "branch": "develop",
     "commit": "e84395de3a5f073416fd0c315b8a10ac06c51e4c",
     "address": "git@github.com:Guodong-Bai/APA_Planning.git",
+
     "pybind_name": "parallel_planning_py",
     "lib_address": "build/jupyter_pybind/parallel_planning_py.cpython-37m-x86_64-linux-gnu.so"
   },
@@ -11,8 +12,9 @@
   "scenario":{
     "slot_width": 2.2,
     "slot_length": 6.0,
-    "lon_available_space_vec": [5.8, 5.85, 5.9, 5.95, 6.0, 6.05, 6.1, 6.15, 6.2, 6.25, 6.3, 6.35, 6.4, 6.45, 6.5, 6.55, 6.6, 6.65, 6.7, 6.75, 6.8, 6.85, 6.9, 6.95, 7.0, 7.05, 7.1, 7.15, 7.2, 7.25, 7.3, 7.35, 7.4, 7.45, 7.5, 7.55, 7.6, 7.65, 7.7, 7.75, 7.8, 7.85, 7.9, 7.95, 8],
-    "channel_width_vec": [20]
+    "channel_width_vec": [20],
+    "lon_available_space_vec": [5.8, 5.85, 5.9, 5.95, 6.0, 6.05, 6.1, 6.15, 6.2, 6.25, 6.3, 6.35, 6.4, 6.45, 6.5, 6.55, 6.6, 6.65, 6.7, 6.75, 6.8, 6.85, 6.9, 6.95, 7.0, 7.05, 7.1, 7.15, 7.2, 7.25, 7.3, 7.35, 7.4]
+
   },
 
   "output_path": "../out"

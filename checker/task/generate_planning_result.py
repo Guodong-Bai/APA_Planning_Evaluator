@@ -79,9 +79,9 @@ if __name__ == "__main__":
     print(f"Time taken for computation: {time_taken:.2f} seconds")
 
     # Save the results to a file
-    # output_file_path = os.path.join(output_path, "traditional_geometric_method.json")
+    output_file_path = os.path.join(output_path, "traditional_geometric_method.json")
 
-    output_file_path = os.path.join(output_path, "proposed_geometric_method.json")
+    # output_file_path = os.path.join(output_path, "proposed_geometric_method.json")
 
 
     save_json(planner_res, output_file_path)
