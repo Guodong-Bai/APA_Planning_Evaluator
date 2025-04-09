@@ -35,7 +35,7 @@ os.chdir(planning_repository)
 subprocess.run(['git', 'fetch'])
 subprocess.run(['git', 'reset', '--hard'])
 subprocess.run(['git', 'clean', '-fd', '--force'])
-subprocess.run(['git', 'reset' '--hard', 'origin/', planning_branch])
+subprocess.run(['git', 'reset', '--hard', 'origin/' + planning_branch])
 # subprocess.run(['git', 'checkout', planning_commit])
 subprocess.run(['git', 'submodule', 'foreach', 'git', 'reset', '--hard'])
 subprocess.run(['git', 'submodule', 'foreach', 'git', 'clean', '--fd', '--force'])
@@ -43,11 +43,29 @@ subprocess.run(['git', 'submodule', 'update', '--init', '--recursive'])
 
 # Compile planning library
 print("compiling planning library for simulation ...")
+# subprocess.run(['make', 'clean'])
 subprocess.run(['make', 'pybind_build'])
 
 # Sync Python libs
 print("sync python libs ...")
 subprocess.run(['cp', planning_lib_address, '../../lib'])
+
+
+branch_proc = subprocess.run(
+    ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
+    stdout=subprocess.PIPE
+)
+branch_name = branch_proc.stdout.decode('utf-8').strip()
+print("branch name = ", branch_name)
+
+log_proc = subprocess.run(
+    ['git', 'log', '-1'],
+    stdout=subprocess.PIPE
+)
+commit_log = log_proc.stdout.decode('utf-8').strip()
+print("commit 日志内容:")
+print(commit_log)
+
 
 # Go back to the task directory and run the simulator
 os.chdir('../../task')

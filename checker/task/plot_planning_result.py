@@ -1,4 +1,5 @@
 
+import math
 import sys
 import ipywidgets
 
@@ -15,8 +16,8 @@ sys.path.append("../out")
 
 from IPython.core.display import display, HTML
 from lib.load_json import load_json
-from lib.load_rotate import coord_transformer, load_car_box
-from lib.load_struct import load_car_params_patch_parking, load_ego_car_box
+from lib.load_rotate import coord_transformer, load_car_box, local2global
+from lib.load_struct import load_car_circle_coord, load_car_params_patch_parking, load_ego_car_box
 
 display(HTML("<style>.container { width:95% !important;  }</style>"))
 output_notebook()
@@ -28,6 +29,8 @@ data_obs = ColumnDataSource(data = {'x_vec':[], 'y_vec':[]})
 data_path = ColumnDataSource(data = {'x_vec':[], 'y_vec':[], 'theta_vec':[]})
 data_path_box = ColumnDataSource(data = {'x_vec':[], 'y_vec':[]})
 
+data_path_circle = ColumnDataSource(data = {'x_vec':[], 'y_vec':[], 'radius_vec':[]})
+
 data_initial_pose = ColumnDataSource(data = {'x':[], 'y':[], 'theta':[]})
 data_initial_car_vertex = ColumnDataSource(data = {'x_vec':[], 'y_vec':[]})
 
@@ -35,13 +38,16 @@ data_target_pose = ColumnDataSource(data = {'x':[], 'y':[], 'theta':[]})
 data_target_car_vertex = ColumnDataSource(data = {'x_vec':[], 'y_vec':[]})
 
 ego_local_x_vec, ego_local_y_vec, _ = load_car_params_patch_parking()
+
+ego_circle_local_x_vec, ego_circle_local_y_vec, ego_circle_local_r_vec = [lst[1:] for lst in load_car_circle_coord()]
+
+
 scenario = load_json("../out/initial_pose_obs_slot.json")
 
 
-planning_res = load_json("../out/proposed_geometric_method.json")
-# planning_res = load_json("../out/traditional_geometric_method.json")
-
-
+# planning_res = load_json("../out/proposed_geometric_method.json")
+# planning_res = load_json("../out/vor_ppm.json")
+planning_res = load_json("../out/hybrid_a_star.json")
 
 
 fig1 = bkp.figure(width=1200, height=800, match_aspect = True, aspect_scale=1)
@@ -121,8 +127,20 @@ fig1.scatter("x_vec", "y_vec", source=data_obs, size=3, color='grey',legend_labe
 
 fig1.scatter("x", "y", source = data_initial_pose, size=3, color='red',legend_label = 'Initial pose')
 fig1.patch('x_vec', 'y_vec', source = data_initial_car_vertex, fill_color='blue', line_color='blue', fill_alpha=0.3, line_width = 0.3)
-
 fig1.patches('x_vec', 'y_vec', source = data_path_box, fill_color='black', line_color='black', fill_alpha=0.01, line_width = 0.3, legend_label = 'Envilope')
+
+fig1.circle(
+    x='x_vec',
+    y='y_vec',
+    radius='radius_vec',
+    source=data_path_circle,
+    fill_color=None,
+    line_color="black",
+    line_alpha=1.0,      # 设置边线完全不透明
+    line_width=0.5,
+    legend_label='Circle Envelope'
+)
+
 
 fig1.legend.label_text_font = "Times New Roman"  # 设置图例字体类型
 fig1.legend.label_text_font_size = '14pt'  # 设置图例字体大小
@@ -227,9 +245,26 @@ def slider_callback(scenario_key, case_idx):
                 'y_vec': box_y_vec,
             })
 
+
+            car_circle_xn = []
+            car_circle_yn = []
+            car_circle_rn = []
+            for k in range(len(path_x_vec)):
+                for i in range(len(ego_circle_local_x_vec)):
+                    tmp_x, tmp_y = local2global(ego_circle_local_x_vec[i], ego_circle_local_y_vec[i], path_x_vec[k], path_y_vec[k], path_heading_vec[k])
+                    car_circle_xn.append(tmp_x)
+                    car_circle_yn.append(tmp_y)
+                    car_circle_rn.append(ego_circle_local_r_vec[i])
+
+            data_path_circle.data.update({
+                'x_vec': car_circle_xn,
+                'y_vec': car_circle_yn,
+                'radius_vec': car_circle_rn
+            })
+
             print("gear shift cnt = ", one_case_res["gear_shift_cnt_slot"])
             print("computation_time = ", one_case_res["computation_time"])
-            print("escape_heading = ", one_case_res["escape_heading"] * 57.3)
+            print("escape_heading = ", one_case_res["escape_heading"] * 180.0 / math.pi)
             print("path points size = ", len(path_x_vec))
 
 

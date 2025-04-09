@@ -104,8 +104,6 @@ class PlanningUpdater:
         self.result.Reset()
         self.result.initial_pose = [ego_x, ego_y, ego_heading_rad]
 
-        self.planning_module.Init()
-
         x_vec = slot_points[0]
         y_vec = slot_points[1]
 
@@ -116,8 +114,10 @@ class PlanningUpdater:
         print("slot_length = ", slot_length)
 
         start_time = time.perf_counter()
+        self.planning_module.Init()
         if self.planning_module.Preprocess(
             obs_x_vec, obs_y_vec, slot_width, slot_length, ego_x, ego_y, ego_heading_rad, ds):
+            print("ego pt in hybrid = ", ego_x, ego_y)
             if self.planning_module.Update():
                 self.result.success = True
 
@@ -128,6 +128,7 @@ class PlanningUpdater:
                 self.result.path_x_vec = self.planning_module.GetPathEle(0)
                 self.result.path_y_vec = self.planning_module.GetPathEle(1)
                 self.result.path_heading_vec = self.planning_module.GetPathEle(2)
+                print("first pt of path = ", self.result.path_x_vec[0], self.result.path_y_vec[0])
 
                 path_points_size = len(self.result.path_x_vec)
 
@@ -140,7 +141,7 @@ class PlanningUpdater:
                     )
                     v_12 = pos2 - pos1
                     v_12_norm = np.linalg.norm(v_12)
-                    if v_12_norm < 0.001:
+                    if v_12_norm < 0.01:
                         continue
                     # path length
                     self.result.path_length += v_12_norm
@@ -166,7 +167,7 @@ class PlanningUpdater:
                 escape_idx = path_points_size - 1
                 for i in range(len(self.result.gear_shift_idx_vec)):
                     idx = self.result.gear_shift_idx_vec[i]
-                    if self.result.path_y_vec[idx] < 0.5 * slot_width:
+                    if self.result.path_y_vec[idx] < 0.5 * slot_width and self.result.path_x_vec[idx] > -0.8 and self.result.path_x_vec[idx] < slot_length + 0.8:
                         escape_idx = idx
                         self.result.escape_heading = self.result.path_heading_vec[idx]
                         self.result.gear_shift_cnt_slot = self.result.total_gear_shift_cnt - i
@@ -184,7 +185,7 @@ class PlanningUpdater:
 
                 corner_oa_dist = 10.0
                 for obs_x, obs_y in zip(obs_x_vec, obs_y_vec):
-                    if is_in_bound(obs_x, slot_length - 0.3, slot_length + 1.0) and is_in_bound(obs_y, 0.5 * slot_width - 0.4, 0.5 * slot_width + 1.0):
+                    if is_in_bound(obs_x, slot_length - 0.3, slot_length + 2.0) and is_in_bound(obs_y, 0.5 * slot_width - 0.45 , 0.5 * slot_width + 1.0):
                         dist_obs_to_center = sqrt((obs_x - center[0])**2 + (obs_y - center[1])**2)
                         corner_oa_dist = min(corner_oa_dist, dist_obs_to_center - corner_radius)
                 self.result.corner_obstacle_avoidance_dist = corner_oa_dist

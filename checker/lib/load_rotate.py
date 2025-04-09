@@ -2,10 +2,8 @@ import math
 import numpy as np
 
 class coord_transformer:
-    def __init__(self) -> None:
-        self.cur_pos_xn = 0.0
-        self.cur_pos_yn = 0.0
-        self.cur_yaw = 0.0
+    def __init__(self, cur_pos_xn = 0.0, cur_pos_yn = 0.0, cur_yaw = 0.0):
+        self.set_info(cur_pos_xn, cur_pos_yn, cur_yaw)
 
     def set_info(self, cur_pos_xn, cur_pos_yn, cur_yaw):
         self.cur_pos_xn = cur_pos_xn

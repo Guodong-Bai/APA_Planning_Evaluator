@@ -38,6 +38,7 @@ def generate_initial_poses_for_scenario(scenario_data, poses_to_generate):
         ego_y = random.uniform(y_bounds[0], y_bounds[1])
         ego_heading = random.uniform(heading_deg_bounds[0],
                                      heading_deg_bounds[1]) * kDeg2Rad
+
         if collision_detector.check_pose_collided(ego_x, ego_y, ego_heading):
             continue
 
@@ -90,7 +91,7 @@ def sample_initial_pose(output_file_path):
 
         save_json(param_dict, output_file_path)
     else:
-        print(f"File already exists: {output_file_path}")
+        print(f"File already exists: {output_file_path}, no need to generate new file")
 
 
 if __name__ == "__main__":

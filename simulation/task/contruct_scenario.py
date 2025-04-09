@@ -93,7 +93,7 @@ def construct_all_scenarios():
 def construct_scenario(
     slot_width=2.2,
     slot_length=6.0,
-    curb_offset=0.4,
+    curb_offset=0.25,
     dx=0.4,
     channel_width=5.5,
     front_car_y_offset=0.2,
