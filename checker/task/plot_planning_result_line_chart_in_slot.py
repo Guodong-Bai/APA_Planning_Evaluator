@@ -214,6 +214,8 @@
 
 import math
 import sys, json, cairosvg, numpy as np
+
+from numpy import mean
 from bokeh.plotting import figure, show, output_file
 from bokeh.layouts import column
 from bokeh.models import SingleIntervalTicker, Legend, LegendItem, FixedTicker, BoxAnnotation, NormalHead, HoverTool, Label, Arrow, OpenHead, ColumnDataSource
@@ -305,6 +307,7 @@ def load_methods_data(file_paths):
     """
     keys = load_json_keys(proposed_file_path)
     print("keys =", keys[0], "--", keys[-1])
+    print("space length =", x_start, "--", x_start + 0.05 * float(keys[-1]))
     methods_data = []
     for fp in file_paths:
         data = load_json(fp)
@@ -434,6 +437,18 @@ def add_aggregated_hover_tool(p, methods_data, metric_key):
 
 # 加载数据
 methods_data = load_methods_data(file_paths)
+# print(methods_data)
+
+performance_vec = ["gear_shift", "escape_heading", "oa_dist"]
+for i in range(1, 4):
+    method_name = legends[i]
+    data = methods_data[i]
+    for key in performance_vec:
+        per_vec = data[key]
+        # 使用 format() 指定每个字段的宽度和对齐方式
+        print("{:<15s} {:<15s} = [ {:>10.6f}, {:>10.6f} ], mean = {:>10.6f}".format(
+              method_name, key, min(per_vec), max(per_vec), mean(per_vec)))
+
 
 # 绘制三个图：换挡次数、逃逸航向和转角避障距离（第一个图显示图例）
 p1 = create_figure("Parking space length (m)", "Gear shift count", x_interval=0.4, y_range=(0, 11), y_interval=2)
@@ -445,7 +460,7 @@ plot_metric(p2, methods_data, "escape_heading", show_legend=False)
 add_aggregated_hover_tool(p2, methods_data, "escape_heading")
 
 p3 = create_figure("Parking space length (m)", "Distance (m)", x_interval=0.4, y_range=(0, 1.2), y_interval=0.3)
-box = BoxAnnotation(left=5.8, right=7.4, bottom=0.28, top=0.4, fill_color="lightgrey", fill_alpha=0.3, level="underlay")
+box = BoxAnnotation(left=5.8, right=7.4, bottom=0.28, top=0.44, fill_color="lightgrey", fill_alpha=0.3, level="underlay")
 p3.add_layout(box)
 
 label = Label(x=7.18, y=0.08, text="Proper region",

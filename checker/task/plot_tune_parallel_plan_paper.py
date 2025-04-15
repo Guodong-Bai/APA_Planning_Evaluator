@@ -568,30 +568,30 @@ def slider_callback(scenario, select_pose, case_idx, ego_x, ego_y, ego_heading, 
         )
 
 
-    output_dict = {}
-    for key in input_data:
-        certain_scenario_data = input_data[key]
-        scenario_data = certain_scenario_data["scenario_data"]
+    # output_dict = {}
+    # for key in input_data:
+    #     certain_scenario_data = input_data[key]
+    #     scenario_data = certain_scenario_data["scenario_data"]
 
-        obs_x_vec = scenario_data["obs_x"]
-        obs_y_vec = scenario_data["obs_y"]
+    #     obs_x_vec = scenario_data["obs_x"]
+    #     obs_y_vec = scenario_data["obs_y"]
 
-        target_corner_x_vec = scenario_data["target_corner_x"]
-        target_corner_y_vec = scenario_data["target_corner_y"]
+    #     target_corner_x_vec = scenario_data["target_corner_x"]
+    #     target_corner_y_vec = scenario_data["target_corner_y"]
 
-        front_corner_x_vec = scenario_data["front_corner_x"]
-        rear_corner_x_vec = scenario_data["rear_corner_x"]
+    #     front_corner_x_vec = scenario_data["front_corner_x"]
+    #     rear_corner_x_vec = scenario_data["rear_corner_x"]
 
 
-        ego_pose = certain_scenario_data["initial_pose"][0]
-        print("ego_pose = ", ego_pose)
+    #     ego_pose = certain_scenario_data["initial_pose"][0]
+    #     print("ego_pose = ", ego_pose)
 
-        slot_points = [ target_corner_x_vec, target_corner_y_vec]
-        res = update_planning_for_pose(ego_pose, obs_x_vec, obs_y_vec, slot_points)
-        print("res after = ", res)
-        one_scenario_data = [res]
-        output_dict[key] = one_scenario_data
-    write_json(output_file_path, output_dict)
+    #     slot_points = [ target_corner_x_vec, target_corner_y_vec]
+    #     res = update_planning_for_pose(ego_pose, obs_x_vec, obs_y_vec, slot_points)
+    #     print("res after = ", res)
+    #     one_scenario_data = [res]
+    #     output_dict[key] = one_scenario_data
+    # write_json(output_file_path, output_dict)
 
 
 

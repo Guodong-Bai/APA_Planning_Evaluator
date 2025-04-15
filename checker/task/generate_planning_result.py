@@ -144,38 +144,14 @@ if __name__ == "__main__":
 
         slot_points = [ target_corner_x_vec, target_corner_y_vec]
 
-        print("---------------------")
-        print("obs_x_vec size = ", len(obs_x_vec))
-        print("obs_y_vec size = ", len(obs_y_vec))
+        try:
+            res = update_planning_for_pose(ego_pose, obs_x_vec, obs_y_vec, slot_points)
+            one_scenario_data = [res]
+            output_dict[key] = one_scenario_data
+        except Exception as e:
+            print(f"update_planning_for_pose 出现异常：{e}")
 
-        pout_x = -100
-        pout_y = -100
-        pin_x = 100
-        pin_y = -100
-        for i in range(len(obs_x_vec)):
-            obs_x = obs_x_vec[i]
-            obs_y = obs_y_vec[i]
-
-            if obs_y > -0.5 and obs_y < 1.5:
-                if obs_x < 3:
-                    pout_x = max(pout_x, obs_x)
-                    pout_y = max(pout_y, obs_y)
-                else:
-                    pin_x = min(pin_x, obs_x)
-                    pin_y = max(pin_y, obs_y)
-        print("pin = ", pin_x, ", ", pin_y)
-        print("pout = ", pout_x, ", ", pout_y)
-
-        print("tlane length = ", pin_x - pout_x)
-
-        print("slot_points = ", slot_points)
-
-
-        res = update_planning_for_pose(ego_pose, obs_x_vec, obs_y_vec, slot_points)
-        print("res = ", res)
-    #     one_scenario_data = [res]
-    #     output_dict[key] = one_scenario_data
-    # write_json(output_file_path, output_dict)
+    write_json(output_file_path, output_dict)
 
 
 
