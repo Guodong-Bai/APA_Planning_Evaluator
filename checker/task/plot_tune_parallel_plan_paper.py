@@ -360,6 +360,14 @@ fig1.legend.click_policy = "hide"
 ### sliders config
 class LocalViewSlider:
     def __init__(self, slider_callback):
+        self.select_pose_slider = ipywidgets.IntSlider(
+            layout=ipywidgets.Layout(width="15%"),
+            description="is select pose",
+            min=0,
+            max=1,
+            value=0,
+            step=1,
+        )
 
         self.scenario_slider = ipywidgets.IntSlider(
             layout=ipywidgets.Layout(width="55%"),
@@ -370,20 +378,11 @@ class LocalViewSlider:
             step=1,
         )
 
-        self.select_pose_slider = ipywidgets.IntSlider(
-            layout=ipywidgets.Layout(width="55%"),
-            description="is select pose",
-            min=0,
-            max=1,
-            value=0,
-            step=1,
-        )
-
         self.case_idx_slider = ipywidgets.IntSlider(
             layout=ipywidgets.Layout(width="60%"),
             description="pose case idx",
             min=0,
-            max=50,
+            max=200,
             value=0,
             step=1,
         )
@@ -425,8 +424,8 @@ class LocalViewSlider:
 
         ipywidgets.interact(
             slider_callback,
-            scenario = self.scenario_slider,
             select_pose=self.select_pose_slider,
+            scenario = self.scenario_slider,
             case_idx=self.case_idx_slider,
             ego_x=self.ego_x_slider,
             ego_y=self.ego_y_slider,
@@ -436,7 +435,7 @@ class LocalViewSlider:
 
 
 ### sliders callback
-def slider_callback(scenario, select_pose, case_idx, ego_x, ego_y, ego_heading, ds):
+def slider_callback(select_pose, scenario, case_idx, ego_x, ego_y, ego_heading, ds):
 
     scenario_key = str(scenario)
     certain_scenario_data = input_data[scenario_key]

@@ -1,5 +1,6 @@
 import glob
 import json
+import multiprocessing
 import bokeh
 import sys, os, copy, re
 import bokeh.plotting as bkp
@@ -56,6 +57,51 @@ def generate_car_obs_vec(
         rear_x_vec = [x + deta_x for x in rear_x_vec]
 
     return rear_x_vec, rear_y_vec
+
+def construct_all_scenarios_multi_process():
+    cur_file_path = os.path.abspath(__file__)
+    cur_path = os.path.dirname(cur_file_path)
+    param_path = os.path.join(cur_path, "source_config.json")
+
+    data = load_json(param_path)
+    scenario_param = data["scenario"]
+
+    slot_width = scenario_param["slot_width"]
+    slot_length = scenario_param["slot_length"]
+    channel_width_vec = scenario_param["channel_width_vec"]
+    lon_available_space_vec = scenario_param["lon_available_space_vec"]
+
+    # 将任务划分为多个部分，每个进程处理一个 (channel_width, lon_available_space) 的组合
+    tasks = [(slot_width, slot_length, lon_available_space, channel_width)
+             for channel_width in channel_width_vec
+             for lon_available_space in lon_available_space_vec]
+
+    # 使用多进程池来并行化处理
+    with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
+        pool.starmap(construct_scenario_in_process, tasks)
+
+    parent_dir = os.path.dirname(cur_path)
+    data_dir = os.path.abspath(os.path.join(parent_dir, "data"))
+
+    # 获取前缀为 "front" 的文件
+    front_files = glob.glob(os.path.join(data_dir, "front*"))
+
+    # 按照文件名中的 lon_ 数字排序
+    sorted_files = sorted(front_files, key=lambda f: float(re.search(r"lon_([\d\.]+)", f).group(1))
+                           if re.search(r"lon_([\d\.]+)", f) else float('inf'))
+
+    return sorted_files
+
+
+
+def construct_scenario_in_process(slot_width, slot_length, lon_available_space, channel_width):
+    """单独的进程用来处理场景生成"""
+    construct_scenario(
+        slot_width=slot_width,
+        slot_length=slot_length,
+        dx=lon_available_space - slot_length,
+        channel_width=channel_width,
+    )
 
 
 def construct_all_scenarios():

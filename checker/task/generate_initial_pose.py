@@ -18,7 +18,7 @@ from lib.load_rotate import *
 from lib.load_struct import *
 from lib.checker_base import *
 from lib.collision_detection import CollisionDetection
-from simulation.task.contruct_scenario import construct_all_scenarios
+from simulation.task.contruct_scenario import construct_all_scenarios, construct_all_scenarios_multi_process
 from simulation.task.apa_simulator import PlanningUpdater
 
 kRad2Deg = 180.0 / math.pi
@@ -36,8 +36,8 @@ def generate_initial_poses_for_scenario(scenario_data, poses_to_generate):
     while initial_pose_count < poses_to_generate:
         ego_x = random.uniform(x_bounds[0], x_bounds[1])
         ego_y = random.uniform(y_bounds[0], y_bounds[1])
-        ego_heading = random.uniform(heading_deg_bounds[0],
-                                     heading_deg_bounds[1]) * kDeg2Rad
+        ego_heading = random.uniform(heading_deg_bounds[0]* kDeg2Rad,
+                                     heading_deg_bounds[1]* kDeg2Rad)
 
         if collision_detector.check_pose_collided(ego_x, ego_y, ego_heading):
             continue
@@ -72,7 +72,8 @@ def sample_initial_pose(output_file_path):
         print(f"File does not exist: {output_file_path}")
 
         # Load obstacles in different scenarios
-        scenario_files = construct_all_scenarios()
+        # scenario_files = construct_all_scenarios()
+        scenario_files = construct_all_scenarios_multi_process()
 
         param_dict = {}
         start_time = time.time()

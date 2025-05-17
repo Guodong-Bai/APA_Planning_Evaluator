@@ -201,6 +201,9 @@ def slider_callback(scenario_key, case_idx):
             'y_vec': [target_slot_y_vec, target_slot_y_vec]
         })
 
+        if case_idx >= len(planning_res[key]):
+            return
+
         one_case_res = planning_res[key][case_idx]
 
         initial_pose = one_case_res["initial_pose"]
@@ -261,8 +264,12 @@ def slider_callback(scenario_key, case_idx):
                 'y_vec': car_circle_yn,
                 'radius_vec': car_circle_rn
             })
+            print("-------------   OUTSIDE  SLOT   ---------------")
+            print("path length = ", one_case_res["path_length"])
+            print("total gear shift = ", one_case_res["total_gear_shift_cnt"])
+            print("-------------   IN  SLOT   ---------------")
 
-            print("gear shift cnt = ", one_case_res["gear_shift_cnt_slot"])
+            print("gear shift in slot = ", one_case_res["gear_shift_cnt_slot"])
             print("computation_time = ", one_case_res["computation_time"])
             print("escape_heading = ", one_case_res["escape_heading"] * 180.0 / math.pi)
             print("path points size = ", len(path_x_vec))

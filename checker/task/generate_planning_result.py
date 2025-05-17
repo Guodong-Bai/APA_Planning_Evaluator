@@ -44,6 +44,8 @@ kDeg2Rad = pi / 180.0
 
 def update_planning_for_pose(initial_pose, obs_x_vec, obs_y_vec, slot_points):
     planner = PlanningUpdater("parallel_planning_py")
+    print("")
+    print("start planning in checker ----------------------------")
     success = planner.update_planning(
         initial_pose[0], initial_pose[1], initial_pose[2], obs_x_vec, obs_y_vec, slot_points, 0.02
     )
@@ -77,8 +79,8 @@ if __name__ == "__main__":
     os.makedirs(output_path, exist_ok=True)
 
      # Save the results to a file
-    output_file_path = os.path.join(output_path, "hybrid_a_star.json")
-    # output_file_path = os.path.join(output_path, "proposed_geometric_method.json")
+    # output_file_path = os.path.join(output_path, "hybrid_a_star.json")
+    output_file_path = os.path.join(output_path, "proposed_geometric_method.json")
     # output_file_path = os.path.join(output_path, "vor_ppm.json")
     # output_file_path = os.path.join(output_path, "vor.json")
 
@@ -131,25 +133,21 @@ if __name__ == "__main__":
 
         obs_x_vec = scenario_data["obs_x"]
         obs_y_vec = scenario_data["obs_y"]
-
         target_corner_x_vec = scenario_data["target_corner_x"]
         target_corner_y_vec = scenario_data["target_corner_y"]
-
         front_corner_x_vec = scenario_data["front_corner_x"]
         rear_corner_x_vec = scenario_data["rear_corner_x"]
-
-
-        ego_pose = certain_scenario_data["initial_pose"][0]
-        print("ego_pose = ", ego_pose)
-
         slot_points = [ target_corner_x_vec, target_corner_y_vec]
 
-        try:
-            res = update_planning_for_pose(ego_pose, obs_x_vec, obs_y_vec, slot_points)
-            one_scenario_data = [res]
-            output_dict[key] = one_scenario_data
-        except Exception as e:
-            print(f"update_planning_for_pose 出现异常：{e}")
+        ego_pose_vec = certain_scenario_data["initial_pose"]
+
+        for ego_pose in ego_pose_vec:
+            try:
+                res = update_planning_for_pose(ego_pose, obs_x_vec, obs_y_vec, slot_points)
+                output_dict.setdefault(key, []).append(res)
+            except Exception as e:
+                print(f"update_planning_for_pose 出现异常：{e}")
+
 
     write_json(output_file_path, output_dict)
 
