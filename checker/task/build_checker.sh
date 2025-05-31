@@ -10,6 +10,7 @@ fi
 
 python generate_initial_pose.py
 python generate_planning_result.py
+
 # python plot_planning_result_line_chart.py
 
 

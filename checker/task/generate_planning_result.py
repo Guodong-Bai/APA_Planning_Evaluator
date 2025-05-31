@@ -47,7 +47,7 @@ def update_planning_for_pose(initial_pose, obs_x_vec, obs_y_vec, slot_points):
     print("")
     print("start planning in checker ----------------------------")
     success = planner.update_planning(
-        initial_pose[0], initial_pose[1], initial_pose[2], obs_x_vec, obs_y_vec, slot_points, 0.02
+        initial_pose[0], initial_pose[1], initial_pose[2], obs_x_vec, obs_y_vec, slot_points, 0.3
     )
     return planner.result.TransferToJson()
 

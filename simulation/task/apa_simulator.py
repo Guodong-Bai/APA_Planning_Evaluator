@@ -112,9 +112,8 @@ class PlanningUpdater:
 
         print("slot_width = ", slot_width)
         print("slot_length = ", slot_length)
-
-        start_time = time.perf_counter()
         self.planning_module.Init()
+        start_time = time.perf_counter()
         if self.planning_module.Preprocess(
             obs_x_vec, obs_y_vec, slot_width, slot_length, ego_x, ego_y, ego_heading_rad, ds):
             print("ego pt in hybrid = ", ego_x, ego_y)

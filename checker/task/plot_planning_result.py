@@ -205,6 +205,7 @@ fig1.circle(
     line_alpha=1.0,  # 设置边线完全不透明
     line_width=0.5,
     legend_label="Circle Envelope",
+    visible=False,
 )
 
 
@@ -218,7 +219,6 @@ fig1.toolbar.active_scroll = fig1.select_one(WheelZoomTool)
 
 class LocalViewSlider:
     def __init__(self, slider_callback):
-
         self.method_slider = ipywidgets.IntSlider(
             layout=ipywidgets.Layout(width="35%"),
             description="planning method",
@@ -241,14 +241,14 @@ class LocalViewSlider:
             layout=ipywidgets.Layout(width="60%"),
             description="intitial pose",
             min=0,
-            max=200,
+            max=999,
             value=0,
             step=1,
         )
 
         ipywidgets.interact(
             slider_callback,
-            method = self.method_slider,
+            method=self.method_slider,
             scenario_key=self.scenario_slider,
             case_idx=self.case_idx_slider,
         )
@@ -294,7 +294,14 @@ def slider_callback(method, scenario_key, case_idx):
                 "theta": [initial_pose[2]],
             }
         )
-        print("initial pose = \n", initial_pose[0], "\n", initial_pose[1], "\n", initial_pose[2] * 180.0 / math.pi)
+        print(
+            "initial pose = \n",
+            initial_pose[0],
+            "\n",
+            initial_pose[1],
+            "\n",
+            initial_pose[2] * 180.0 / math.pi,
+        )
         car_global_vertex_x_vec, car_global_vertex_y_vec = load_ego_car_box(
             initial_pose[0],
             initial_pose[1],
