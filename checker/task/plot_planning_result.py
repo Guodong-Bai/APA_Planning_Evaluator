@@ -220,11 +220,11 @@ fig1.toolbar.active_scroll = fig1.select_one(WheelZoomTool)
 class LocalViewSlider:
     def __init__(self, slider_callback):
         self.method_slider = ipywidgets.IntSlider(
-            layout=ipywidgets.Layout(width="35%"),
+            layout=ipywidgets.Layout(width="20%"),
             description="planning method",
             min=0,
             max=1,
-            value=0,
+            value=1,
             step=1,
         )
 

@@ -393,7 +393,7 @@ class LocalViewSlider:
             description="ego_x",
             min=-15,
             max=15,
-            value=6.27,
+            value=2.2926153909328253 ,
             step=0.01,
         )
         self.ego_y_slider = ipywidgets.FloatSlider(
@@ -401,7 +401,7 @@ class LocalViewSlider:
             description="ego_y",
             min=-10,
             max=10,
-            value=2.8960951861241053,
+            value= 2.5976030798170564 ,
             step=0.01,
         )
         self.ego_heading_slider = ipywidgets.FloatSlider(
@@ -409,7 +409,7 @@ class LocalViewSlider:
             description="ego_heading",
             min=-180,
             max=180,
-            value=-0.5133240215115417,
+            value=-41.64483919993241,
             step=0.1,
         )
 
