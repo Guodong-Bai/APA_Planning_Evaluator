@@ -151,7 +151,7 @@ def construct_scenario(
 ):
     # channel obs car
     x_offset_vec = [1.2, 3.6, 6.0, 8.9, 12.3]
-    y_offset_vec = [-0.3, 0.3, 0.6, 0.2, 0.4]
+    y_offset_vec = [0.0, 0.3, 0.6, 0.2, 0.4]
     heading_offset_vec = [0.0, 0.0, 0.0, 6.0 / 57.3, 70 / 57.3]
 
 
@@ -215,7 +215,7 @@ def construct_scenario(
     # Process channel cars
     channel_matrix = []
     x_offset_vec = [1.2, 3.6, 6.0, 8.9, 12.3]
-    y_offset_vec = [-0.3, 0.3, 0.6, 0.2, 0.4]
+    y_offset_vec = [0.0, 0.3, 0.6, 0.2, 0.4]   ## -0.3
     heading_offset_vec = [0.0, 0.0, 0.0, 6.0 / 57.3, 70 / 57.3]
 
     for x_offset, y_offset, heading_offset in zip(x_offset_vec, y_offset_vec,
