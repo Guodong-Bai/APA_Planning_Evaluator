@@ -6,7 +6,7 @@ import bokeh.plotting as bkp
 from bokeh.events import Tap
 from bokeh.layouts import row
 from bokeh.io import output_notebook, push_notebook
-from bokeh.models import ColumnDataSource, WheelZoomTool, HoverTool, TapTool, CustomJS
+from bokeh.models import ColumnDataSource, WheelZoomTool, HoverTool, TapTool, CustomJS, Arrow, VeeHead
 
 sys.path.append("..")
 sys.path.append("../..")
@@ -36,6 +36,11 @@ data_initial_car_vertex = ColumnDataSource(data={"x_vec": [], "y_vec": []})
 data_target_pose = ColumnDataSource(data={"x": [], "y": [], "theta": []})
 data_target_car_vertex = ColumnDataSource(data={"x_vec": [], "y_vec": []})
 
+data_initial_pos =  ColumnDataSource(data={"x_vec": [], "y_vec": []})
+data_initial_pose_arrow =  ColumnDataSource(data={"xs_vec": [], "ys_vec": [], "xe_vec":[], "ye_vec":[]})
+
+data_initial_pose_region = ColumnDataSource(data={"cx": [], "cy": [], "w":[], "h":[]})
+
 ego_local_x_vec, ego_local_y_vec, _ = load_car_params_patch_parking()
 
 ego_circle_local_x_vec, ego_circle_local_y_vec, ego_circle_local_r_vec = [
@@ -50,6 +55,8 @@ def reset_data():
 
 
 scenario = load_json("../out/initial_pose_obs_slot.json")
+checker_task = load_json("checker_task.json")
+
 
 fig1 = bkp.figure(width=1200, height=800, match_aspect=True, aspect_scale=1)
 fig1.x_range.flipped = False
@@ -146,10 +153,10 @@ fig1.patch(
     "x_vec",
     "y_vec",
     source=data_slot,
-    line_width=1.5,
+    line_width=1.0,
     line_color="black",
     fill_alpha=0.0,
-    legend_label="Target slots",
+    # legend_label="Target slots",
     visible=True,
 )
 
@@ -160,7 +167,7 @@ fig1.patches(
     line_width=1.5,
     line_color="black",
     fill_alpha=0.0,
-    legend_label="Nearby slots",
+    # legend_label="Nearby slots",
     visible=True,
 )
 fig1.scatter(
@@ -183,6 +190,7 @@ fig1.patch(
     line_color="blue",
     fill_alpha=0.3,
     line_width=0.3,
+    legend_label="Ego car",
 )
 fig1.patches(
     "x_vec",
@@ -207,6 +215,49 @@ fig1.circle(
     legend_label="Circle Envelope",
     visible=False,
 )
+
+# fig1.segment(
+#     x0="xs_vec", y0="ys_vec", x1="xe_vec", y1="ye_vec",
+#     source=data_initial_pose_arrow,
+#     line_width=1, line_color="black", legend_label="initial pose"
+# )
+
+fig1.circle("x_vec", "y_vec", source=data_initial_pos, size=2, color="green", alpha=1, legend_label="initial pose")
+
+
+
+arrow = Arrow(
+    end=VeeHead(
+        size=8,
+        fill_color="blue",
+        fill_alpha=0.6,
+        line_color="blue",   # ← 这里把头部轮廓也设为绿色
+        line_width=1          # ← 如果想让轮廓线更粗／更细，可以调这个参数
+    ),
+    x_start="xs_vec",
+    y_start="ys_vec",
+    x_end="xe_vec",
+    y_end="ye_vec",
+    source=data_initial_pose_arrow,
+    line_color="blue",      # ← 这是箭杆（shaft）的颜色
+    line_width=1,
+    line_alpha=1
+)
+
+fig1.add_layout(arrow)
+
+fig1.rect(
+    x="cx", y="cy",
+    width="w", height="h",
+    angle=0,                # 不旋转
+    source=data_initial_pose_region,
+    fill_color=None,        # 只绘制边框
+    line_color="green",
+    line_width=2,
+    legend_label="Rectangles"
+)
+
+
 
 
 fig1.legend.label_text_font = "Times New Roman"  # 设置图例字体类型
@@ -256,7 +307,49 @@ class LocalViewSlider:
 
 def slider_callback(method, scenario_key, case_idx):
     reset_data()
+
+    x_min = checker_task["x_lower_bound"]
+    x_max = checker_task["x_upper_bound"]
+    y_min = checker_task["y_lower_bound"]
+    y_max = checker_task["y_upper_bound"]
+
+    data_initial_pose_region.data.update({\
+        "cx": [0.5 * (x_min + x_max)],
+        "cy": [0.5 * (y_min + y_max)],
+        "w": [x_max - x_min],
+        "h": [y_max - y_min]
+    })
+
+
+    ## update all initial poses
+    xs = []
+    ys = []
+    x_ends = []
+    y_ends = []
+    arrow_len = 0.3
     key = str(scenario_key)
+    initial_pose_vec = scenario[key]["initial_pose"]
+    # print("initial_pose_vec = ", initial_pose_vec)
+
+    for x, y, theta in initial_pose_vec:
+        dx = arrow_len * math.cos(theta)
+        dy = arrow_len * math.sin(theta)
+        xs.append(x)
+        ys.append(y)
+        x_ends.append(x + dx)
+        y_ends.append(y + dy)
+    data_initial_pos.data.update({
+        "x_vec": xs,
+        "y_vec": ys
+    })
+
+    data_initial_pose_arrow.data.update({
+        "xs_vec": xs[::20],
+        "ys_vec": ys[::20],
+        "xe_vec": x_ends[::20],
+        "ye_vec": y_ends[::20]
+    })
+
     if method == 0:
         planning_res = load_json("../out/hybrid_a_star.json")
     elif method == 1:
@@ -402,3 +495,5 @@ def slider_callback(method, scenario_key, case_idx):
 
 bkp.show(row(fig1), notebook_handle=True)
 slider_class = LocalViewSlider(slider_callback)
+
+
