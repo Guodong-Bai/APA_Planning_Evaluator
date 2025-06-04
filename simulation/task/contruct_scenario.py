@@ -141,7 +141,7 @@ def construct_scenario(
     slot_length=6.0,
     curb_offset=0.25,
     dx=0.4,
-    channel_width=5.5,
+    channel_width=3.5,
     front_car_y_offset=0.2,
     front_car_heading=0.0 / 57.3,
     rear_car_y_offset=0.2,
@@ -269,8 +269,8 @@ def construct_scenario(
 
 
 if __name__ == "__main__":
-    construct_scenario()
-    name = "../data/front_occupied_rear_occupied_lon_6.4_channel_width_5.5.json"
+    construct_scenario(channel_width = 3.5)
+    name = "../data/front_occupied_rear_occupied_lon_6.4_channel_width_3.5.json"
 
     data = load_json(name)
 
