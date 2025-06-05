@@ -21,7 +21,7 @@
   },
 
   "x_lower_bound": -2.0,
-  "x_upper_bound": 9.0,
+  "x_upper_bound": 12.0,
   "y_lower_bound": 1.5,
   "y_upper_bound": 5.0,
   "heading_deg_lower_bound": -50.0,

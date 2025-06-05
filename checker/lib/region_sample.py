@@ -4,16 +4,9 @@ import matplotlib.pyplot as plt
 def grid_sample(initial_pose_vec, grid_step=0.1):
     """
     对 initial_pose_vec 中的位姿 ([x, y, theta]) 做网格化采样：
-    在 x-y 平面上以 grid_step 为步长划网格，然后从每个非空格子中随机选取一个位姿。
-
-    参数：
-    - initial_pose_vec: List of [x, y, theta]（theta 为弧度）。
-    - grid_step: 网格边长（默认为 0.1）。
-
-    返回：
-    - sampled_list: 同样形如 [[x, y, theta], …]，其中每个格子只保留一个位姿。
+    每个格子中选取离格子中心最近的点。
     """
-    data = np.array(initial_pose_vec)  # shape=(N, 3)
+    data = np.array(initial_pose_vec)
     if data.ndim != 2 or data.shape[1] != 3:
         raise ValueError("initial_pose_vec 必须是形如 [[x,y,theta], …] 的列表")
     xs = data[:, 0]
@@ -31,14 +24,19 @@ def grid_sample(initial_pose_vec, grid_step=0.1):
     ix = np.clip(ix, 0, len(x_edges) - 2)
     iy = np.clip(iy, 0, len(y_edges) - 2)
 
-    perm = np.random.permutation(len(xs))
-    seen = set()
-    selected_indices = []
-    for idx in perm:
+    # 对每个格子，选离格子中心最近的点
+    cell_to_idx = dict()
+    for idx in range(len(xs)):
         cell = (ix[idx], iy[idx])
-        if cell not in seen:
-            seen.add(cell)
-            selected_indices.append(idx)
+        # 格子中心坐标
+        center_x = x_edges[cell[0]] + grid_step / 2
+        center_y = y_edges[cell[1]] + grid_step / 2
+        dist = (xs[idx] - center_x) ** 2 + (ys[idx] - center_y) ** 2
+        # 如果该格子没存点，或者当前点更接近格子中心
+        if (cell not in cell_to_idx) or (dist < cell_to_idx[cell][1]):
+            cell_to_idx[cell] = (idx, dist)
+
+    selected_indices = [v[0] for v in cell_to_idx.values()]
 
     sampled = []
     for idx in selected_indices:
@@ -46,47 +44,37 @@ def grid_sample(initial_pose_vec, grid_step=0.1):
 
     return sampled
 
+# ------- 主函数 -------
+if __name__ == "__main__":
+    # 生成示例数据
+    np.random.seed(42)
+    N = 500
+    xs = np.random.uniform(-2.0, 2.0, size=N)
+    ys = np.random.uniform(-1.5, 1.5, size=N)
+    thetas = np.random.uniform(0, 2 * np.pi, size=N)
+    initial_pose_vec = np.column_stack((xs, ys, thetas)).tolist()
 
+    # 网格化采样（格子中心选点）
+    sampled_list = grid_sample_centered(initial_pose_vec, grid_step=0.5)
 
-# 生成示例数据
-np.random.seed(42)
-N = 500
-xs = np.random.uniform(-2.0, 2.0, size=N)
-ys = np.random.uniform(-1.5, 1.5, size=N)
-thetas = np.random.uniform(0, 2 * np.pi, size=N)
-initial_pose_vec = np.column_stack((xs, ys, thetas)).tolist()
+    sampled = np.array(sampled_list)
+    xs_s = sampled[:, 0]
+    ys_s = sampled[:, 1]
+    thetas_s = sampled[:, 2]
 
-# 网格化采样
-sampled_list = grid_sample(initial_pose_vec, grid_step=0.5)
+    arrow_len = 0.2
+    dx = arrow_len * np.cos(thetas_s)
+    dy = arrow_len * np.sin(thetas_s)
 
-# 转换采样结果
-sampled = np.array(sampled_list)
-xs_s = sampled[:, 0]
-ys_s = sampled[:, 1]
-thetas_s = sampled[:, 2]
-
-# 计算箭头分量
-arrow_len = 0.2
-dx = arrow_len * np.cos(thetas_s)
-dy = arrow_len * np.sin(thetas_s)
-
-# 绘图并保存为 SVG
-fig, ax = plt.subplots(figsize=(6, 6))
-ax.scatter(xs, ys, s=10, color='lightgray', label='原始采样点')
-ax.scatter(xs_s, ys_s, s=30, color='green', alpha=0.8, label='网格化抽样点')
-
-# 绘制箭头
-ax.quiver(xs_s, ys_s, dx, dy, angles='xy', scale_units='xy', scale=1, width=0.005, color='blue')
-
-ax.set_title('Grid-sampled Poses with Orientations')
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.legend(loc='upper right')
-ax.set_aspect('equal', 'box')
-plt.tight_layout()
-
-# 保存为 SVG
-plt.savefig("grid_sampled_poses.svg", format="svg")
-
-# 显示图像
-plt.show()
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.scatter(xs, ys, s=10, color='lightgray', label='原始采样点')
+    ax.scatter(xs_s, ys_s, s=30, color='green', alpha=0.8, label='均匀栅格采样点')
+    ax.quiver(xs_s, ys_s, dx, dy, angles='xy', scale_units='xy', scale=1, width=0.005, color='blue')
+    ax.set_title('Grid-sampled (center-near) Poses with Orientations')
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.legend(loc='upper right')
+    ax.set_aspect('equal', 'box')
+    plt.tight_layout()
+    plt.savefig("grid_sampled_poses_centered.svg", format="svg")
+    plt.show()

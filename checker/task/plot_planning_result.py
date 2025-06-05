@@ -17,6 +17,7 @@ from IPython.core.display import display, HTML
 from lib.load_json import load_json
 from lib.load_rotate import load_car_box, local2global
 from lib.load_struct import *
+from lib.region_sample import grid_sample
 
 display(HTML("<style>.container { width:95% !important;  }</style>"))
 output_notebook()
@@ -322,32 +323,44 @@ def slider_callback(method, scenario_key, case_idx):
 
 
     ## update all initial poses
-    xs = []
-    ys = []
-    x_ends = []
-    y_ends = []
-    arrow_len = 0.3
+
+
     key = str(scenario_key)
     initial_pose_vec = scenario[key]["initial_pose"]
     # print("initial_pose_vec = ", initial_pose_vec)
 
+    tmp_x_vec = []
+    tmp_y_vec = []
     for x, y, theta in initial_pose_vec:
-        dx = arrow_len * math.cos(theta)
-        dy = arrow_len * math.sin(theta)
-        xs.append(x)
-        ys.append(y)
-        x_ends.append(x + dx)
-        y_ends.append(y + dy)
+        tmp_x_vec.append(x)
+        tmp_y_vec.append(y)
     data_initial_pos.data.update({
-        "x_vec": xs,
-        "y_vec": ys
+        "x_vec": tmp_x_vec,
+        "y_vec": tmp_y_vec
     })
 
+
+
+    xs_vec = []
+    ys_vec = []
+    xe_vec = []
+    ye_vec = []
+    arrow_len = 0.3
+    simp_pose_vec = grid_sample(initial_pose_vec, 1)
+    for x, y, theta in simp_pose_vec:
+        dx = arrow_len * math.cos(theta)
+        dy = arrow_len * math.sin(theta)
+        xs_vec.append(x)
+        ys_vec.append(y)
+        xe_vec.append(x + dx)
+        ye_vec.append(y + dy)
+
+
     data_initial_pose_arrow.data.update({
-        "xs_vec": xs[::20],
-        "ys_vec": ys[::20],
-        "xe_vec": x_ends[::20],
-        "ye_vec": y_ends[::20]
+        "xs_vec": xs_vec,
+        "ys_vec": ys_vec,
+        "xe_vec": xe_vec,
+        "ye_vec": ye_vec
     })
 
     if method == 0:
