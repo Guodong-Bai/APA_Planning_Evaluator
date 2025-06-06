@@ -55,7 +55,7 @@ if __name__ == "__main__":
     initial_pose_vec = np.column_stack((xs, ys, thetas)).tolist()
 
     # 网格化采样（格子中心选点）
-    sampled_list = grid_sample_centered(initial_pose_vec, grid_step=0.5)
+    sampled_list = grid_sample(initial_pose_vec, grid_step=0.5)
 
     sampled = np.array(sampled_list)
     xs_s = sampled[:, 0]

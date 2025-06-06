@@ -2,11 +2,29 @@ import math
 import sys
 import ipywidgets
 
+from matplotlib import cm
 import bokeh.plotting as bkp
 from bokeh.events import Tap
 from bokeh.layouts import row
 from bokeh.io import output_notebook, push_notebook
-from bokeh.models import ColumnDataSource, WheelZoomTool, HoverTool, TapTool, CustomJS, Arrow, VeeHead
+from bokeh.transform import linear_cmap
+from bokeh.palettes import Turbo256  # Turbo256 是线性全彩渐变
+from bokeh.models import (
+    ColumnDataSource,
+    WheelZoomTool,
+    HoverTool,
+    TapTool,
+    CustomJS,
+    Arrow,
+    VeeHead,
+    ColorBar,
+    LinearColorMapper,
+    FixedTicker,
+    FuncTickFormatter,Label, FixedTicker
+)
+import os
+from bokeh.io.export import export_svgs, export_png
+import cairosvg
 
 sys.path.append("..")
 sys.path.append("../..")
@@ -21,6 +39,10 @@ from lib.region_sample import grid_sample
 
 arrow_len = 0.3
 display_resolution = 1.2
+rad2deg = 180.0 / math.pi
+deg2rad = math.pi / 180.0
+
+word_size = "22pt"
 
 display(HTML("<style>.container { width:95% !important;  }</style>"))
 output_notebook()
@@ -40,10 +62,30 @@ data_initial_car_vertex = ColumnDataSource(data={"x_vec": [], "y_vec": []})
 data_target_pose = ColumnDataSource(data={"x": [], "y": [], "theta": []})
 data_target_car_vertex = ColumnDataSource(data={"x_vec": [], "y_vec": []})
 
-data_initial_pos =  ColumnDataSource(data={"x_vec": [], "y_vec": []})
-data_initial_pose_arrow =  ColumnDataSource(data={"xs_vec": [], "ys_vec": [], "xe_vec":[], "ye_vec":[]})
+data_all_initial_pose = ColumnDataSource(
+    data={"x_vec": [], "y_vec": [], "theta_vec": []}
+)
+data_initial_pose_arrow = ColumnDataSource(
+    data={"xs_vec": [], "ys_vec": [], "xe_vec": [], "ye_vec": []}
+)
 
-data_initial_pose_region = ColumnDataSource(data={"cx": [], "cy": [], "w":[], "h":[]})
+data_initial_pose_region = ColumnDataSource(data={"cx": [], "cy": [], "w": [], "h": []})
+
+checker_task = load_json("checker_task.json")
+scenario = load_json("../out/initial_pose_obs_slot.json")
+
+x_min = checker_task["x_lower_bound"]
+x_max = checker_task["x_upper_bound"]
+y_min = checker_task["y_lower_bound"]
+y_max = checker_task["y_upper_bound"]
+theta_min = checker_task["heading_deg_lower_bound"] * deg2rad
+theta_max = checker_task["heading_deg_upper_bound"] * deg2rad
+
+
+jet256 = [cm.get_cmap('jet')(i) for i in range(256)]
+jet256 = [cm.colors.rgb2hex(c[:3]) for c in jet256]
+mapper = LinearColorMapper(palette=Turbo256, low=theta_min, high=theta_max)
+
 
 ego_local_x_vec, ego_local_y_vec, _ = load_car_params_patch_parking()
 
@@ -58,14 +100,18 @@ def reset_data():
     data_path_circle.data.update({"x_vec": [], "y_vec": [], "radius_vec": []})
 
 
-scenario = load_json("../out/initial_pose_obs_slot.json")
-checker_task = load_json("checker_task.json")
-
-
-fig1 = bkp.figure(width=1200, height=800, match_aspect=True, aspect_scale=1)
+fig1 = bkp.figure(width=1200, height=550, match_aspect=True, aspect_scale=1)
 fig1.x_range.flipped = False
 fig1.outline_line_color = "black"
 fig1.outline_line_width = 1.0
+
+
+fig1.x_range.start = -7
+fig1.x_range.end = 18
+fig1.y_range.start = -2.5
+fig1.y_range.end = 10.5
+# fig1.xaxis.ticker = FixedTicker(ticks=list(np.arange(-8, 22, 5)))
+fig1.yaxis.ticker = FixedTicker(ticks=list(np.arange(0, 11, 5)))
 
 # measure tool
 source = ColumnDataSource(data=dict(x=[], y=[]))
@@ -88,7 +134,7 @@ fig1.text(
     source=text_source,
     text_color="red",
     text_align="center",
-    text_font_size="15pt",
+    text_font_size=word_size,
     legend_label="measure tool",
 )
 # Define the JavaScript callback code
@@ -150,7 +196,7 @@ fig1.line(
     line_color="green",
     line_dash="solid",
     legend_label="Car Path",
-    visible=True,
+    visible=False,
 )
 
 fig1.patch(
@@ -184,7 +230,7 @@ fig1.scatter(
 )
 
 fig1.scatter(
-    "x", "y", source=data_initial_pose, size=3, color="red", legend_label="Initial pose"
+    "x", "y", source=data_initial_pose, size=3, color="red", legend_label="Initial pose", visible=False
 )
 fig1.patch(
     "x_vec",
@@ -195,6 +241,7 @@ fig1.patch(
     fill_alpha=0.3,
     line_width=0.3,
     legend_label="Ego car",
+    visible=False
 )
 fig1.patches(
     "x_vec",
@@ -205,6 +252,7 @@ fig1.patches(
     fill_alpha=0.01,
     line_width=0.3,
     legend_label="Envelope",
+    visible=False
 )
 
 fig1.circle(
@@ -226,50 +274,95 @@ fig1.circle(
 #     line_width=1, line_color="black", legend_label="initial pose"
 # )
 
-fig1.circle("x_vec", "y_vec", source=data_initial_pos, size=2, color="green", alpha=1, legend_label="initial pose")
+# fig1.circle("x_vec", "y_vec", source=data_initial_pos, size=2, color="green", alpha=1, legend_label="initial pose")
 
-
-
-arrow = Arrow(
-    end=VeeHead(
-        size=8,
-        fill_color="blue",
-        fill_alpha=0.6,
-        line_color="blue",   # ← 这里把头部轮廓也设为绿色
-        line_width=1          # ← 如果想让轮廓线更粗／更细，可以调这个参数
-    ),
-    x_start="xs_vec",
-    y_start="ys_vec",
-    x_end="xe_vec",
-    y_end="ye_vec",
-    source=data_initial_pose_arrow,
-    line_color="blue",      # ← 这是箭杆（shaft）的颜色
-    line_width=1,
-    line_alpha=1
+fig1.circle(
+    "x_vec",
+    "y_vec",
+    source=data_all_initial_pose,
+    size=6,
+    alpha=1,
+    color=linear_cmap("theta_vec", jet256, theta_min, theta_max),
+    line_color=None,
 )
 
-fig1.add_layout(arrow)
+ticks = [theta_min, theta_min / 2, 0.0, theta_max / 2.0, theta_max]
+color_bar = ColorBar(
+    color_mapper=mapper,
+    location=(0, 0),
+    title="Heading (deg)",
+    ticker=FixedTicker(ticks=ticks),
+    formatter=FuncTickFormatter(code="return (tick * 180/Math.PI).toFixed(0) + '°';"),
+    major_label_text_font_size=word_size,
+    major_label_text_font="Times New Roman",
+    title_text_font_size=word_size,
+    title_text_font="Times New Roman",
+    # 不加 title_text_align
+)
+fig1.add_layout(color_bar, "right")
+
+
+# arrow = Arrow(
+#     end=VeeHead(
+#         size=8,
+#         fill_color="blue",
+#         fill_alpha=0.6,
+#         line_color="blue",  # ← 这里把头部轮廓也设为绿色
+#         line_width=1,  # ← 如果想让轮廓线更粗／更细，可以调这个参数
+#     ),
+#     x_start="xs_vec",
+#     y_start="ys_vec",
+#     x_end="xe_vec",
+#     y_end="ye_vec",
+#     source=data_initial_pose_arrow,
+#     line_color="blue",  # ← 这是箭杆（shaft）的颜色
+#     line_width=1,
+#     line_alpha=1,
+# )
+
+# fig1.add_layout(arrow)
 
 fig1.rect(
-    x="cx", y="cy",
-    width="w", height="h",
-    angle=0,                # 不旋转
+    x="cx",
+    y="cy",
+    width="w",
+    height="h",
+    angle=0,  # 不旋转
     source=data_initial_pose_region,
-    fill_color=None,        # 只绘制边框
+    fill_color=None,  # 只绘制边框
     line_color="green",
     line_width=2,
-    legend_label="Rectangles"
+    legend_label="Rectangles",
 )
 
-
-
+fig1.legend.visible = False
 
 fig1.legend.label_text_font = "Times New Roman"  # 设置图例字体类型
-fig1.legend.label_text_font_size = "14pt"  # 设置图例字体大小
+fig1.legend.label_text_font_size = word_size  # 设置图例字体大小
 fig1.legend.location = "top_left"
 
 fig1.legend.click_policy = "hide"
 fig1.toolbar.active_scroll = fig1.select_one(WheelZoomTool)
+
+fig1.xaxis.major_label_text_font_size = word_size
+fig1.yaxis.major_label_text_font_size = word_size
+fig1.xaxis.major_label_text_font = "Times New Roman"
+fig1.yaxis.major_label_text_font = "Times New Roman"
+
+fig1.xaxis.axis_label_text_font_size = word_size
+fig1.xaxis.axis_label_text_font = "Times New Roman"
+fig1.yaxis.axis_label_text_font_size = word_size
+fig1.yaxis.axis_label_text_font = "Times New Roman"
+
+fig1.title.text_font_size = word_size
+fig1.title.text_font = "Times New Roman"
+
+fig1.xaxis.minor_tick_line_color = None
+fig1.yaxis.minor_tick_line_color = None
+
+fig1.xgrid.grid_line_color = None
+fig1.ygrid.grid_line_color = None
+
 
 
 class LocalViewSlider:
@@ -312,31 +405,28 @@ class LocalViewSlider:
 def slider_callback(method, scenario_key, case_idx):
     reset_data()
 
-    x_min = checker_task["x_lower_bound"]
-    x_max = checker_task["x_upper_bound"]
-    y_min = checker_task["y_lower_bound"]
-    y_max = checker_task["y_upper_bound"]
-
-    data_initial_pose_region.data.update({\
-        "cx": [0.5 * (x_min + x_max)],
-        "cy": [0.5 * (y_min + y_max)],
-        "w": [x_max - x_min],
-        "h": [y_max - y_min]
-    })
+    data_initial_pose_region.data.update(
+        {
+            "cx": [0.5 * (x_min + x_max)],
+            "cy": [0.5 * (y_min + y_max)],
+            "w": [x_max - x_min],
+            "h": [y_max - y_min],
+        }
+    )
 
     key = str(scenario_key)
     initial_pose_vec = scenario[key]["initial_pose"]
 
-    tmp_x_vec = []
-    tmp_y_vec = []
-    for x, y, theta in initial_pose_vec:
-        tmp_x_vec.append(x)
-        tmp_y_vec.append(y)
-    data_initial_pos.data.update({
-        "x_vec": tmp_x_vec,
-        "y_vec": tmp_y_vec
-    })
+    initial_pose_np_vec = np.array(initial_pose_vec)
+    x_vec = initial_pose_np_vec[:, 0]
+    y_vec = initial_pose_np_vec[:, 1]
+    theta_vec = initial_pose_np_vec[:, 2]
 
+    data_all_initial_pose.data.update(
+        {"x_vec": x_vec, "y_vec": y_vec, "theta_vec": theta_vec}
+    )
+
+    ## arraw
     xs_vec = []
     ys_vec = []
     xe_vec = []
@@ -350,13 +440,9 @@ def slider_callback(method, scenario_key, case_idx):
         xe_vec.append(x + dx)
         ye_vec.append(y + dy)
 
-
-    data_initial_pose_arrow.data.update({
-        "xs_vec": xs_vec,
-        "ys_vec": ys_vec,
-        "xe_vec": xe_vec,
-        "ye_vec": ye_vec
-    })
+    data_initial_pose_arrow.data.update(
+        {"xs_vec": xs_vec, "ys_vec": ys_vec, "xe_vec": xe_vec, "ye_vec": ye_vec}
+    )
 
     if method == 0:
         planning_res = load_json("../out/hybrid_a_star.json")
@@ -505,3 +591,16 @@ bkp.show(row(fig1), notebook_handle=True)
 slider_class = LocalViewSlider(slider_callback)
 
 
+os.environ['WEB_BROWSER'] = 'chrome'
+fig1.output_backend = "svg"
+
+name = "sample_region"
+svg_file_path = name +'.svg'
+eps_file_path = name +'.eps'
+export_svgs(fig1, filename=svg_file_path)
+
+# 使用 CairoSVG 直接转换
+# cairosvg.svg2eps(url=svg_file_path, write_to=eps_file_path)
+# print(f"SVG 文件已直接转换为 EPS：'{eps_file_path}'")
+
+cairosvg.svg2pdf(url=svg_file_path, write_to=name +'.pdf')
